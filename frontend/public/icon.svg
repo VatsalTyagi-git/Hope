@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="hopeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5244E3" />
+      <stop offset="100%" stop-color="#7B6FF0" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#hopeGradient)" />
+  <text x="32" y="44" font-family="Georgia, Newsreader, serif" font-size="38" font-style="italic" font-weight="bold" fill="#FFFFFF" text-anchor="middle">h.</text>
+</svg>
