@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js build
+.next/
+out/
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+.ruff_cache/
+.pytest_cache/
+
+# Prisma & Generated DB Artifacts
+backend/db/generated/
+
+# Environment Variables & Secrets (NEVER COMMIT)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+backend/db/.env
+frontend/.env.local
+my-agent/.env.local
+
+# Build Outputs
+dist/
+build/
+
+# Operating System & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.pem
+
+# AI IDE & Agent metadata
+.agents/
+.claude/
+.windsurf/
+skills-lock.json
+*.log

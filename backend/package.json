@@ -1,0 +1,39 @@
+{
+  "name": "ai-therapist-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "server.ts",
+  "scripts": {
+    "start": "tsx server.ts",
+    "dev": "tsx watch server.ts",
+    "build": "tsc",
+    "clear-graph": "node scripts/clearFalkorDB.js",
+    "simulate-10": "node scripts/simulate10SessionsBothUsers.js",
+    "test-isolation": "node scripts/testUserIsolation.js",
+    "db:generate": "prisma generate --config db/prisma7.config.ts",
+    "db:push": "prisma db push --config db/prisma7.config.ts",
+    "db:studio": "prisma studio --config db/prisma7.config.ts"
+  },
+  "prisma": {
+    "schema": "db/prisma/schema.prisma"
+  },
+  "dependencies": {
+    "@google/genai": "^2.29.1",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "falkordb": "^6.8.0",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "@types/pg": "^8.23.1",
+    "prisma": "^7.10.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
