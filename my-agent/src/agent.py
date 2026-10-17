@@ -330,18 +330,23 @@ async def on_session_end(ctx: JobContext) -> None:
         if not transcript:
             primary_sess = getattr(ctx, "_primary_agent_session", None)
             if primary_sess and hasattr(primary_sess, "history") and hasattr(primary_sess.history, "messages"):
-                for m in primary_sess.history.messages:
-                    if getattr(m, "role", None) in ("user", "assistant"):
-                        text = getattr(m, "text_content", "") or ""
-                        clean_text = str(text).strip()
-                        if clean_text and not clean_text.startswith("Using your signature calm, warm"):
-                            transcript.append(
-                                {
-                                    "role": str(m.role),
-                                    "content": clean_text,
-                                    "createdAt": getattr(m, "created_at", None),
-                                }
-                            )
+                try:
+                    msgs_getter = getattr(primary_sess.history, "messages")
+                    msgs_list = msgs_getter() if callable(msgs_getter) else msgs_getter
+                    for m in msgs_list:
+                        if getattr(m, "role", None) in ("user", "assistant"):
+                            text = getattr(m, "text_content", "") or ""
+                            clean_text = str(text).strip()
+                            if clean_text and not clean_text.startswith("Using your signature calm, warm"):
+                                transcript.append(
+                                    {
+                                        "role": str(m.role),
+                                        "content": clean_text,
+                                        "createdAt": getattr(m, "created_at", None),
+                                    }
+                                )
+                except Exception as hist_err:
+                    logger.debug(f"Could not read from history.messages: {hist_err}")
 
         # Resolve human participant identity
         user_identity = getattr(ctx.room, "_last_user_identity", None)
@@ -589,6 +594,7 @@ async def my_agent(ctx: JobContext):
 
             print(f"[SESSION START] Triggering {session_mode.upper()} greeting for patient '{patient_name}'...", flush=True)
             try:
+                await asyncio.sleep(1.5)
                 handle = session.generate_reply(instructions=greeting_instructions)
                 if handle:
                     await handle

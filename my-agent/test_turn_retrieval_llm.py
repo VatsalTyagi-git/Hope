@@ -60,7 +60,7 @@ for idx, question in enumerate(test_questions, 1):
     
     # Send user question to Gemini with tool enabled
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.1-flash-lite",
         contents=question,
         config=types.GenerateContentConfig(
             system_instruction=system_instruction,
@@ -97,7 +97,7 @@ for idx, question in enumerate(test_questions, 1):
         ]
         
         final_response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.1-flash-lite",
             contents=followup_contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,

@@ -1,89 +1,77 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
-@source "../node_modules/streamdown/dist/index.js";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #002cf2;
-  --primary-hover: color-mix(in srgb, #002cf2 80%, #000);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.75rem;
+  /* Hope: purple theme (landing + chat) */
+  --background: oklch(0.985 0.01 295);
+  --foreground: oklch(0.25 0.06 285);
+  --card: oklch(0.995 0.005 295);
+  --card-foreground: oklch(0.25 0.06 285);
+  --popover: oklch(0.995 0.005 295);
+  --popover-foreground: oklch(0.25 0.06 285);
+  --primary: oklch(0.5 0.18 285);
+  --primary-hover: oklch(0.44 0.19 285);
+  --primary-foreground: oklch(0.99 0.005 295);
+  --secondary: oklch(0.955 0.025 295);
+  --secondary-foreground: oklch(0.3 0.08 285);
+  --muted: oklch(0.96 0.02 295);
+  --muted-foreground: oklch(0.5 0.06 285);
+  --accent: oklch(0.93 0.04 295);
+  --accent-foreground: oklch(0.3 0.08 285);
+  --destructive: oklch(0.577 0.22 25);
+  --destructive-foreground: oklch(0.99 0.005 295);
+  --border: oklch(0.9 0.035 295);
+  --input: oklch(0.88 0.04 295);
+  --ring: oklch(0.6 0.15 285);
+  --success: oklch(0.58 0.17 290);
+  --care-blue: oklch(0.95 0.03 280);
+  --care-green: oklch(0.95 0.03 305);
+  --care-lilac: oklch(0.95 0.035 295);
+  --glow: oklch(0.72 0.17 295);
+  --shadow-soft: 0 12px 40px oklch(0.45 0.15 290 / 0.12);
+  --shadow-chat: 0 18px 65px oklch(0.45 0.15 290 / 0.16), 0 2px 6px oklch(0.3 0.05 290 / 0.04);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.269 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: #1fd5f9;
-  --primary-hover: color-mix(in srgb, #1fd5f9 80%, #000);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.371 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.439 0 0);
+  --background: oklch(0.18 0.035 290);
+  --foreground: oklch(0.94 0.02 295);
+  --card: oklch(0.22 0.04 290);
+  --card-foreground: oklch(0.94 0.02 295);
+  --popover: oklch(0.22 0.04 290);
+  --popover-foreground: oklch(0.94 0.02 295);
+  --primary: oklch(0.72 0.17 295);
+  --primary-hover: oklch(0.78 0.16 295);
+  --primary-foreground: oklch(0.16 0.03 290);
+  --secondary: oklch(0.25 0.045 290);
+  --secondary-foreground: oklch(0.94 0.02 295);
+  --muted: oklch(0.24 0.04 290);
+  --muted-foreground: oklch(0.7 0.045 290);
+  --accent: oklch(0.28 0.055 290);
+  --accent-foreground: oklch(0.96 0.015 295);
+  --destructive: oklch(0.65 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.3 0.05 290);
+  --input: oklch(0.32 0.05 290);
+  --ring: oklch(0.7 0.15 290);
+  --success: oklch(0.7 0.17 290);
+  --care-blue: oklch(0.26 0.05 280);
+  --care-green: oklch(0.26 0.05 305);
+  --care-lilac: oklch(0.27 0.055 295);
+  --glow: oklch(0.5 0.18 290);
+  --shadow-soft: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --shadow-chat: 0 18px 65px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 @theme inline {
   --font-sans:
-    var(--font-public-sans), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    'DM Sans', var(--font-public-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-display: 'Instrument Serif', Georgia, serif;
   --font-mono:
-    var(--font-commit-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    'Liberation Mono', 'Courier New', monospace;
-  --font-serif:
-    var(--font-serif), ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+    var(--font-commit-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -100,45 +88,103 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
+  --color-care-blue: var(--care-blue);
+  --color-care-green: var(--care-green);
+  --color-care-lilac: var(--care-lilac);
 }
 
 @layer base {
   * {
-    @apply border-foreground/20 outline-ring/50;
+    @apply border-border/60;
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
   }
+}
 
-  /* Elegant slim scrollbars */
-  ::-webkit-scrollbar {
-    width: 5px;
-    height: 5px;
+/* Animations for Voice Agent Circular Orb */
+@keyframes voice-ripple-1 {
+  0% {
+    transform: scale(0.96);
+    opacity: 0.85;
   }
-  ::-webkit-scrollbar-track {
-    background: transparent;
+  50% {
+    transform: scale(1.22);
+    opacity: 0.35;
   }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.35);
-    border-radius: 9999px;
+  100% {
+    transform: scale(1.48);
+    opacity: 0;
   }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(100, 116, 139, 0.55);
+}
+
+@keyframes voice-ripple-2 {
+  0% {
+    transform: scale(0.96);
+    opacity: 0.65;
   }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.22;
+  }
+  100% {
+    transform: scale(1.72);
+    opacity: 0;
+  }
+}
+
+@keyframes voice-breathe-orb {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 35px oklch(0.65 0.18 290 / 0.25),
+      0 0 70px oklch(0.65 0.18 290 / 0.12);
+  }
+  50% {
+    transform: scale(1.045);
+    box-shadow:
+      0 0 55px oklch(0.65 0.18 290 / 0.45),
+      0 0 95px oklch(0.65 0.18 290 / 0.22);
+  }
+}
+
+@keyframes voice-wave-bar {
+  0%,
+  100% {
+    height: 6px;
+    opacity: 0.5;
+  }
+  50% {
+    height: 24px;
+    opacity: 1;
+  }
+}
+
+.animate-ripple-1 {
+  animation: voice-ripple-1 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.animate-ripple-2 {
+  animation: voice-ripple-2 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite 0.7s;
+}
+
+.animate-voice-breathe {
+  animation: voice-breathe-orb 5s ease-in-out infinite alternate;
+}
+
+/* Hope Brand Mark */
+.hope-brand {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+
+.hope-brand span {
+  color: var(--primary);
 }

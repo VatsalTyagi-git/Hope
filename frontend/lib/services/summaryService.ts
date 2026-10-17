@@ -14,25 +14,25 @@ export const summaryService = {
     const fullText = conversation.messages.map((m) => m.content).join(' ').toLowerCase();
 
     let title = conversation.title;
-    let whatWeExplored = "You explored current feelings and identified meaningful micro-actions to create space for yourself. Small, intentional pauses were recognized as valuable restorative practices.";
-    let tags = ['Wellbeing', 'Self-care', 'Emotional balance'];
-    let carryWithYou = 'Give yourself permission to pause without needing a reason.';
+    let whatWeExplored = "Engaged in meaningful therapeutic reflection, identifying automatic cognitive thoughts and applying grounded CBT reframing.";
+    let tags = ['CBT Reflection', 'Cognitive Reframing', 'Self-Compassion'];
+    let carryWithYou = 'Take a moment to notice what your mind needs today, without judgment.';
 
-    if (fullText.includes('walk') || fullText.includes('phone') || fullText.includes('balance')) {
-      title = 'Finding a little balance';
-      whatWeExplored = "You explored feeling stretched between daily demands and your own needs. Evening walks emerged as a familiar, restorative practice that you'd like to return to.";
-      tags = ['Work-life balance', 'Self-care', 'Feeling overwhelmed'];
-      carryWithYou = 'Make space for a ten-minute, phone-free walk.';
-    } else if (fullText.includes('bruno') || fullText.includes('dog')) {
-      title = 'Nurturing connection with Bruno';
-      whatWeExplored = "Reflected on the responsibility and protective love felt for Bruno. Grounded through the recognition that anxiety often signals care rather than incompetence.";
-      tags = ['Pet companionship', 'Responsibility', 'Grounding'];
-      carryWithYou = 'Take five quiet minutes to sit and breathe alongside Bruno today.';
-    } else if (fullText.includes('work') || fullText.includes('slack') || fullText.includes('meeting')) {
-      title = 'Decompressing work pressures';
-      whatWeExplored = "Examined automatic cognitive pressures around urgent workplace expectations. Identified the importance of physical transitions at the end of the workday.";
-      tags = ['Work stress', 'Boundaries', 'Mindful transitions'];
-      carryWithYou = 'Close your laptop lid with intention and take three cleansing breaths.';
+    if (fullText.includes('marcus') || fullText.includes('aurora') || fullText.includes('failover') || fullText.includes('imposter')) {
+      title = 'Project Aurora & Performance Reframing';
+      whatWeExplored = "Explored work-related imposter panic and catastrophic interpretations of technical reviews. Applied evidence-based CBT reframing to separate constructive feedback from self-worth.";
+      tags = ['Work Anxiety', 'Catastrophizing', 'Cognitive Restructuring'];
+      carryWithYou = 'Constructive critique is normal engineering review, not proof of incompetence.';
+    } else if (fullText.includes('boundary') || fullText.includes('julian') || fullText.includes('laptop') || fullText.includes('pr')) {
+      title = 'Work-Life Boundaries';
+      whatWeExplored = "Examined rigid 'Should Statements' around late-night responsiveness. Reinforced healthy boundaries and cognitive clarity over constant availability.";
+      tags = ['Should Statements', 'Boundaries', 'Work-Life Balance'];
+      carryWithYou = 'Closing my laptop at 8 PM protects my mental clarity, which allows me to do better work tomorrow.';
+    } else if (fullText.includes('sigh') || fullText.includes('breath') || fullText.includes('standup') || fullText.includes('clara')) {
+      title = 'Somatic Grounding & Standup Calm';
+      whatWeExplored = "Applied physiological sigh breathing to down-regulate nervous system arousal before workplace triggers, shifting from dread to steady presence.";
+      tags = ['Somatic Regulation', 'Physiological Sigh', 'Daily Practice'];
+      carryWithYou = 'Take two quick inhales through the nose and a long, slow exhale whenever tension arises.';
     }
 
     const summary: SessionSummary = {
