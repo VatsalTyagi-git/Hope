@@ -258,7 +258,7 @@ export function AgentTrackControl({
 
   useEffect(() => {
     // A track was already acquired elsewhere (e.g. session.start()), so permission is already
-    // granted — safe to fetch labeled devices without a second getUserMedia prompt. Without
+    // granted: safe to fetch labeled devices without a second getUserMedia prompt. Without
     // this, the list stays label-less until a page reload, since the device observer only
     // re-fetches when `requestPermissions` changes value. Screen share has no `kind` and no
     // associated device list, so it should never trigger a mic/camera permission request.
@@ -280,7 +280,7 @@ export function AgentTrackControl({
 
   const filteredDevices = useMemo(() => devices.filter((d) => d.deviceId !== ''), [devices]);
   // Before permission is granted, the browser reports devices with blank ids, which get filtered
-  // out here — that's an *unknown* device count, not a confirmed empty one. Only treat it as
+  // out here: that is an unknown device count, not a confirmed empty one. Only treat it as
   // "no devices" once a permission-gated check has actually run and still come up empty;
   // otherwise the toggle disables itself before the user ever gets a chance to grant permission.
   const noDevices = Boolean(kind) && requestPermissionsState && filteredDevices.length === 0;

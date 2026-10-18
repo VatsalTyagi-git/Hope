@@ -35,6 +35,7 @@ export async function POST(req: Request) {
         name: user.name || cleanEmail.split('@')[0],
         email: user.email,
         image: user.image,
+        onboardingComplete: Boolean(user.onboardingComplete),
       },
     });
   } catch (err: any) {

@@ -115,7 +115,7 @@ export function App({
   return (
     <AgentSessionProvider session={session}>
       <AppSetup />
-      <main className="grid h-svh grid-cols-1 place-content-center">
+      <main className="relative h-dvd w-full overflow-hidden">
         <ViewController
           isVideoInputSupported={isVideoInputSupported}
           therapistTitle={therapistTitle}

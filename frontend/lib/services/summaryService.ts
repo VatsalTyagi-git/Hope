@@ -14,23 +14,23 @@ export const summaryService = {
     const fullText = conversation.messages.map((m) => m.content).join(' ').toLowerCase();
 
     let title = conversation.title;
-    let whatWeExplored = "Engaged in meaningful therapeutic reflection, identifying automatic cognitive thoughts and applying grounded CBT reframing.";
+    let whatWeExplored = "We engaged in meaningful therapeutic reflection together, identifying automatic thoughts and applying grounded CBT reframing.";
     let tags = ['CBT Reflection', 'Cognitive Reframing', 'Self-Compassion'];
     let carryWithYou = 'Take a moment to notice what your mind needs today, without judgment.';
 
     if (fullText.includes('marcus') || fullText.includes('aurora') || fullText.includes('failover') || fullText.includes('imposter')) {
       title = 'Project Aurora & Performance Reframing';
-      whatWeExplored = "Explored work-related imposter panic and catastrophic interpretations of technical reviews. Applied evidence-based CBT reframing to separate constructive feedback from self-worth.";
+      whatWeExplored = "We explored work-related imposter panic and catastrophic interpretations of technical reviews. Together, we applied evidence-based CBT reframing to separate constructive feedback from your self-worth.";
       tags = ['Work Anxiety', 'Catastrophizing', 'Cognitive Restructuring'];
       carryWithYou = 'Constructive critique is normal engineering review, not proof of incompetence.';
     } else if (fullText.includes('boundary') || fullText.includes('julian') || fullText.includes('laptop') || fullText.includes('pr')) {
       title = 'Work-Life Boundaries';
-      whatWeExplored = "Examined rigid 'Should Statements' around late-night responsiveness. Reinforced healthy boundaries and cognitive clarity over constant availability.";
+      whatWeExplored = "We examined rigid 'Should Statements' around late-night responsiveness. Together, we reinforced healthy boundaries and cognitive clarity over constant availability.";
       tags = ['Should Statements', 'Boundaries', 'Work-Life Balance'];
       carryWithYou = 'Closing my laptop at 8 PM protects my mental clarity, which allows me to do better work tomorrow.';
     } else if (fullText.includes('sigh') || fullText.includes('breath') || fullText.includes('standup') || fullText.includes('clara')) {
       title = 'Somatic Grounding & Standup Calm';
-      whatWeExplored = "Applied physiological sigh breathing to down-regulate nervous system arousal before workplace triggers, shifting from dread to steady presence.";
+      whatWeExplored = "We practiced physiological sigh breathing to down-regulate nervous system arousal before workplace triggers, shifting from dread to steady presence.";
       tags = ['Somatic Regulation', 'Physiological Sigh', 'Daily Practice'];
       carryWithYou = 'Take two quick inhales through the nose and a long, slow exhale whenever tension arises.';
     }

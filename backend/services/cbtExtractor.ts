@@ -133,7 +133,7 @@ ${dialogText}
 Extract a structured clinical analysis matching the following JSON schema strictly:
 {
   "title": "A concise 3-5 word objective title summarizing the primary topic or goal discussed (e.g., 'Exam Anxiety Coping', 'Marcus Architecture Feedback', 'Overcoming Presentation Panic', 'Sleep Routine Reset'). DO NOT include words like 'patient', 'client', 'session', 'brief', 'check-in', 'therapist', or greetings.",
-  "summary": "2-4 sentence clinical summary of what the patient explored, emotional shifts, and cognitive interventions applied.",
+  "summary": "2-4 warm, empathetic sentences written in collaborative first-person plural ('We' / 'You' / 'Together') from Hope's perspective reflecting directly with the user on what was explored in the session (e.g., 'In this session, we explored your feelings around [topic] and looked at how [situation] triggered [reaction]. Together, we identified [pattern] and practiced [strategy]. We also discussed your goal to continue working on [takeaway].'). CRITICAL DIRECTIVE: NEVER write in detached third-person clinical language. NEVER use 'the patient', 'the client', 'the companion', 'the therapist', or 'they/their' to describe the user or Hope. Speak directly and warmly with the user using 'we', 'together', and 'you/your'.",
   "initial_mood": 5, // int 1-10 estimation at start of call
   "final_mood": 6, // int 1-10 estimation at end of call
   "mode": "WEEKLY", // "WEEKLY" | "DAILY" | "ON_DEMAND"
@@ -225,11 +225,90 @@ Return ONLY the raw JSON object. Do not include markdown code fences or conversa
       });
       parsed.weekly_daily_plan = Array.from(planByDay.values()).sort((a, b) => a.day_number - b.day_number);
     }
+
+    if (parsed.summary) {
+      parsed.summary = toFirstPersonSummary(parsed.summary);
+    }
+
     return parsed;
   } catch (err) {
     console.error('Failed to parse Gemini CBT extraction JSON:', err, responseText);
     throw new Error('LLM output was not valid JSON');
   }
+}
+
+/**
+ * Transforms clinical third-person summary phrasing into warm, empathetic
+ * first-person plural reflections ("we explored", "together we identified", "you shared").
+ */
+export function toFirstPersonSummary(summary: string): string {
+  if (!summary || typeof summary !== 'string') return summary;
+
+  let text = summary.trim();
+
+  // Sentence beginnings
+  text = text
+    .replace(/^the\s+(?:patient|client)\s+initiated\s+the\s+conversation\s+(?:by\s+)?expressing\s+/i, 'We began by exploring ')
+    .replace(/^the\s+(?:patient|client)\s+initiated\s+contact\s+(?:to\s+discuss|expressing|seeking)\s+/i, 'We connected to explore ')
+    .replace(/^the\s+(?:patient|client)\s+(?:reached\s+out|came\s+in)\s+(?:to\s+discuss|feeling|seeking|expressing)\s+/i, 'We connected to explore ')
+    .replace(/^the\s+(?:patient|client)\s+(?:sought\s+support\s+to|presented\s+with|sought\s+help\s+with)\s+/i, 'We focused on ')
+    .replace(/^the\s+(?:patient|client)\s+explored\s+/i, 'We explored ')
+    .replace(/^the\s+(?:patient|client)\s+discussed\s+/i, 'We discussed ')
+    .replace(/^the\s+(?:patient|client)\s+shared\s+/i, 'You shared ')
+    .replace(/^the\s+(?:patient|client)\s+described\s+/i, 'You described ')
+    .replace(/^the\s+(?:patient|client)\s+reported\s+/i, 'You shared ')
+    .replace(/^the\s+(?:patient|client)\s+stated\s+/i, 'You reflected that ')
+    .replace(/^the\s+(?:patient|client)\s+expressed\s+/i, 'We explored your feelings of ')
+    .replace(/^the\s+(?:patient|client)\s+experienced\s+/i, 'We focused on your experience of ')
+    .replace(/^the\s+(?:patient|client)\s+struggled\s+with\s+/i, 'We looked into the challenges around ')
+    .replace(/^the\s+(?:patient|client)\s+reflected\s+on\s+/i, 'We reflected together on ')
+    .replace(/^the\s+(?:patient|client)\s+navigated\s+/i, 'We navigated ')
+    .replace(/^the\s+(?:patient|client)\s+identified\s+/i, 'Together, we identified ');
+
+  // Mid-sentence replacements
+  text = text
+    .replace(/which\s+they\s+reported\s+was\s+leading\s+to/gi, 'and how it was contributing to')
+    .replace(/which\s+they\s+felt\s+was/gi, 'which felt like it was')
+    .replace(/which\s+the\s+(?:patient|client)\s+reported\s+/gi, 'which you noted ')
+    .replace(/(?:the\s+)?companion\s+validated\s+their\s+feelings\s+and\s+explored/gi, 'We validated these feelings and explored')
+    .replace(/(?:the\s+)?companion\s+(?:and\s+the\s+patient|guided\s+the\s+patient\s+to|helped\s+the\s+patient\s+to)/gi, 'we worked together to')
+    .replace(/(?:the\s+)?companion\s+guided\s+them\s+to/gi, 'we worked together to')
+    .replace(/(?:the\s+)?companion\s+introduced\s+/gi, 'we introduced ')
+    .replace(/(?:the\s+)?companion\s+explored\s+/gi, 'we explored ')
+    .replace(/(?:the\s+)?companion\s+provided\s+/gi, 'we practiced ')
+    .replace(/(?:the\s+)?companion\s+suggested\s+/gi, 'we explored ')
+    .replace(/(?:the\s+)?companion\s+encouraged\s+/gi, 'we encouraged ')
+    .replace(/(?:the\s+)?companion\s+helped\s+/gi, 'we worked to ')
+    .replace(/(?:the\s+)?companion\s+validated\s+/gi, 'we validated ')
+    .replace(/leading\s+(?:to\s+)?the\s+(?:patient|client)\s+to\s+identify/gi, 'helping you identify')
+    .replace(/leading\s+(?:to\s+)?the\s+(?:patient|client)\s+to\s+/gi, 'guiding you to ')
+    .replace(/(?:the\s+)?(?:patient|client)\s+later\s+expressed\s+a\s+desire\s+to\s+/gi, 'We also discussed your desire to ')
+    .replace(/(?:the\s+)?(?:patient|client)\s+also\s+expressed\s+/gi, 'You also shared ')
+    .replace(/(?:the\s+)?(?:patient|client)\s+noted\s+/gi, 'You noted ')
+    .replace(/indicating\s+a\s+need\s+for\s+more\s+in-depth\s+cognitive\s+work/gi, 'laying the groundwork for deeper cognitive reflection together')
+    .replace(/the\s+(?:patient|client)'s/gi, 'your')
+    .replace(/\b(?:patient|client)'s\b/gi, 'your')
+    .replace(/the\s+(?:patient|client)\b/gi, 'you')
+    .replace(/the\s+companion\b/gi, 'we')
+    .replace(/\btheir\s+(feelings|thoughts|emotions|anxiety|concerns|fear|fears|reaction|reactions|situation|work|life|mind|goals|progress|triggers)\b/gi, 'your $1')
+    .replace(/\bto\s+challenge\s+their\b/gi, 'to challenge your')
+    .replace(/\bfrom\s+their\b/gi, 'from your')
+    .replace(/\babout\s+their\b/gi, 'about your')
+    .replace(/\bwith\s+their\b/gi, 'with your')
+    .replace(/\binto\s+their\b/gi, 'into your')
+    .replace(/\bfor\s+their\b/gi, 'for your');
+
+  // Capitalize sentence beginnings
+  text = text.replace(/(?:^|[.!?]\s+)([a-z])/g, (_, letter) => letter.toUpperCase());
+
+  // Clean up any duplicates
+  text = text
+    .replace(/\bwe\s+we\b/gi, 'we')
+    .replace(/\byou\s+you\b/gi, 'you')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  return text;
 }
 
 function generateDefaultWeeklyPlan(data: Partial<CbtExtractedData>): WeeklyDayExercise[] {

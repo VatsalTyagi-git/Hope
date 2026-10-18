@@ -313,7 +313,7 @@ export const HopeVoiceSession = React.forwardRef<
       {/* Main Content Area: Circular Voice Agent Orb + Direct Chat Transcript */}
       <main className="relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden">
         {/* Top: Animated Circular Voice Agent Orb */}
-        <section className="border-border/40 from-background/40 to-secondary/20 relative flex shrink-0 flex-col items-center justify-center border-b bg-gradient-to-b pt-4 pb-3 sm:pt-6 sm:pb-4">
+        <section className="border-border/40 from-background/40 to-secondary/20 relative flex shrink-0 flex-col items-center justify-center border-b bg-gradient-to-b pt-5 pb-2.5 sm:pt-6 sm:pb-4">
           <div className="relative flex items-center justify-center">
             {/* Animated outer ripple waves radiating outwards when listening */}
             {isListening && (
@@ -349,7 +349,7 @@ export const HopeVoiceSession = React.forwardRef<
             {/* The Main Circular Voice Agent Orb */}
             <div
               className={cn(
-                'relative flex size-24 items-center justify-center rounded-full transition-all duration-500 sm:size-28',
+                'relative flex size-20 items-center justify-center rounded-full transition-all duration-500 sm:size-28',
                 'border-2 shadow-lg backdrop-blur-sm',
                 isListening &&
                   'animate-voice-breathe border-primary/60 from-primary/20 via-card to-care-lilac/30 bg-gradient-to-br shadow-[0_0_45px_oklch(0.65_0.18_290/0.35)]',
@@ -582,7 +582,10 @@ export const HopeVoiceSession = React.forwardRef<
         </section>
 
         {/* Bottom Floating Controls Bar */}
-        <footer className="border-border/60 bg-background/90 relative z-20 shrink-0 border-t px-4 py-3 backdrop-blur-md sm:px-6">
+        <footer 
+          className="border-border/60 bg-background/90 relative z-30 shrink-0 border-t px-3 pt-2.5 backdrop-blur-md sm:px-6 sm:py-3"
+          style={{ paddingBottom: 'max(10px, env(safe-area-inset-bottom))' }}
+        >
           <div className="mx-auto flex max-w-3xl items-center gap-2.5">
             {/* Mic Toggle Button */}
             <button

@@ -59,9 +59,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-// ============================================================================
 // Helpers
-// ============================================================================
 
 const convertBlobUrlToDataUrl = async (url: string): Promise<string | null> => {
   try {
@@ -156,9 +154,7 @@ const captureScreenshot = async (): Promise<File | null> => {
   }
 };
 
-// ============================================================================
-// Provider Context & Types
-// ============================================================================
+// Provider Context and Types
 
 export interface AttachmentsContext {
   files: (FileUIPart & { id: string })[];
@@ -222,11 +218,11 @@ export const PromptInputProvider = ({
   initialInput: initialTextInput = '',
   children,
 }: PromptInputProviderProps) => {
-  // ----- textInput state
+  // textInput state
   const [textInput, setTextInput] = useState(initialTextInput);
   const clearInput = useCallback(() => setTextInput(''), []);
 
-  // ----- attachments state (global when wrapped)
+  // attachments state (global when wrapped)
   const [attachmentFiles, setAttachmentFiles] = useState<(FileUIPart & { id: string })[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   // oxlint-disable-next-line eslint(no-empty-function)
@@ -336,9 +332,7 @@ export const PromptInputProvider = ({
   );
 };
 
-// ============================================================================
-// Component Context & Hooks
-// ============================================================================
+// Component Context and Hooks
 
 const LocalAttachmentsContext = createContext<AttachmentsContext | null>(null);
 
@@ -355,9 +349,7 @@ export const usePromptInputAttachments = () => {
   return context;
 };
 
-// ============================================================================
 // Referenced Sources (Local to PromptInput)
-// ============================================================================
 
 export interface ReferencedSourcesContext {
   sources: (SourceDocumentUIPart & { id: string })[];
@@ -492,11 +484,11 @@ export const PromptInput = ({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
 
-  // ----- Local attachments (only used when no provider)
+  // Local attachments (only used when no provider)
   const [items, setItems] = useState<(FileUIPart & { id: string })[]>([]);
   const files = usingProvider ? controller.attachments.files : items;
 
-  // ----- Local referenced sources (always local to PromptInput)
+  // Local referenced sources (always local to PromptInput)
   const [referencedSources, setReferencedSources] = useState<
     (SourceDocumentUIPart & { id: string })[]
   >([]);
@@ -525,7 +517,7 @@ export const PromptInput = ({
 
       return patterns.some((pattern) => {
         if (pattern.endsWith('/*')) {
-          // e.g: image/* -> image/
+          // e.g: image/* to image/
           const prefix = pattern.slice(0, -1);
           return f.type.startsWith(prefix);
         }

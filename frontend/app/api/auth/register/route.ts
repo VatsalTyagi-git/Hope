@@ -45,6 +45,7 @@ export async function POST(req: Request) {
           id: newUser.id,
           name: newUser.name,
           email: newUser.email,
+          onboardingComplete: false,
         },
       },
       { status: 201 }

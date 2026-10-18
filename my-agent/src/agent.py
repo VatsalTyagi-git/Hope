@@ -38,9 +38,7 @@ AGENT_NAME = os.getenv("LIVEKIT_AGENT_NAME", "my-agent-local")
 HOPE_VOICE = os.getenv("HOPE_VOICE", "Rasalgethi")
 
 
-# ==============================================================================
-# UNIFIED VOCAL IDENTITY & ACOUSTIC DIRECTIVE (IDENTICAL ACROSS ALL 3 AGENTS)
-# ==============================================================================
+# UNIFIED VOCAL IDENTITY AND ACOUSTIC DIRECTIVE (IDENTICAL ACROSS ALL 3 AGENTS)
 UNIFIED_VOCAL_IDENTITY_DIRECTIVE = textwrap.dedent(
     """\
     # Unified Voice Identity & Acoustic Delivery (MANDATORY):
@@ -52,9 +50,7 @@ UNIFIED_VOCAL_IDENTITY_DIRECTIVE = textwrap.dedent(
 )
 
 
-# ==============================================================================
 # 1. WEEKLY MAIN THERAPIST SYSTEM PROMPT
-# ==============================================================================
 WEEKLY_MAIN_THERAPIST_PROMPT = (
     textwrap.dedent(
         """\
@@ -83,9 +79,7 @@ WEEKLY_MAIN_THERAPIST_PROMPT = (
 )
 
 
-# ==============================================================================
 # 2. DAILY EXERCISE THERAPIST SYSTEM PROMPT
-# ==============================================================================
 DAILY_EXERCISE_THERAPIST_PROMPT = (
     textwrap.dedent(
         """\
@@ -112,9 +106,7 @@ DAILY_EXERCISE_THERAPIST_PROMPT = (
 )
 
 
-# ==============================================================================
 # 3. ON-DEMAND COMPANION SYSTEM PROMPT
-# ==============================================================================
 ON_DEMAND_COMPANION_PROMPT = (
     textwrap.dedent(
         """\
@@ -142,9 +134,7 @@ ON_DEMAND_COMPANION_PROMPT = (
 )
 
 
-# ==============================================================================
 # 4. INITIAL INTAKE THERAPIST SYSTEM PROMPT (NEW USERS - FIRST SESSION ONLY)
-# ==============================================================================
 INITIAL_INTAKE_THERAPIST_PROMPT = (
     textwrap.dedent(
         """\
@@ -455,11 +445,11 @@ async def my_agent(ctx: JobContext):
 
     # Set up a voice AI pipeline
     session = AgentSession(
-        turn_handling=TurnHandlingOptions(
-            turn_detection=inference.TurnDetector(),
-            interruption={"mode": "adaptive"},
-            preemptive_generation={"enabled": True},
-        ),
+        # turn_handling=TurnHandlingOptions(
+        #     turn_detection=inference.TurnDetector(),
+        #     interruption={"mode": "adaptive"},
+        #     preemptive_generation={"enabled": True},
+        # ),
         expressive=True,
     )
 
@@ -675,7 +665,7 @@ async def my_agent(ctx: JobContext):
             ctx.shutdown(reason="duplicate agent collision prevented")
             return
 
-    # Guard against orphaned agent staying in empty room forever (allow 120s for browser connect & mic permissions)
+    # Guard against orphaned agent staying in empty room forever (allow 120s for browser connect and mic permissions)
     async def auto_shutdown_if_alone():
         await asyncio.sleep(120)
         if not [p for p in ctx.room.remote_participants.values() if not is_agent_participant(p)]:

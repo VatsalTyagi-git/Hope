@@ -34,13 +34,8 @@ export default function LandingPage() {
           </p>
           <div className="hero-actions">
             <Button asChild size="lg" className="pill-button">
-              <Link href="/dashboard">
+              <Link href="/login">
                 Let&apos;s talk <ArrowUpRight />
-              </Link>
-            </Button>
-            <Button asChild variant="link" className="quiet-link">
-              <Link href="/approach">
-                A gentler way forward <span>↗</span>
               </Link>
             </Button>
           </div>
@@ -54,7 +49,7 @@ export default function LandingPage() {
         <ChatDemo />
       </section>
 
-      <section className="section-wrap care-section">
+      <section id = "therapists"className="section-wrap care-section">
         <div className="section-title">
           <span className="section-eyebrow">DIFFERENT MOMENTS. THE SAME CARE.</span>
           <h2>
@@ -73,11 +68,11 @@ export default function LandingPage() {
 
       <MemorySection />
 
-      <section className="closing-section">
+      <section className="closing-section theme-purple">
         <span className="section-eyebrow">YOU DON&apos;T HAVE TO HAVE IT ALL FIGURED OUT</span>
         <h2>Start with what&apos;s on your mind.</h2>
         <Button asChild size="lg" className="pill-button">
-          <Link href="/dashboard">
+          <Link href="/login">
             Find your space <ArrowUpRight />
           </Link>
         </Button>

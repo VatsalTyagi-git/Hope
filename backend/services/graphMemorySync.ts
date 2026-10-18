@@ -51,7 +51,7 @@ export async function syncSessionToFalkorDB({
   const parseEpochSeconds = (val: any, fallback: number): number => {
     if (!val) return fallback;
     if (typeof val === 'number') {
-      if (val > 1e11) return Math.floor(val / 1000); // ms -> s
+      if (val > 1e11) return Math.floor(val / 1000); // ms to s
       if (val > 1e8) return Math.floor(val);         // already s
     }
     if (typeof val === 'string' && !isNaN(Number(val))) {
@@ -161,7 +161,7 @@ export async function syncSessionToFalkorDB({
     }
   );
 
-  // 4. Record Episodes & Semantic CBT Connections (All scoped strictly to this user)
+  // 4. Record Episodes and Semantic CBT Connections (All scoped strictly to this user)
   if (Array.isArray(extractedData.episodes)) {
     for (let i = 0; i < extractedData.episodes.length; i++) {
       const ep = extractedData.episodes[i];
@@ -242,7 +242,7 @@ export async function syncSessionToFalkorDB({
           }
         );
 
-        // Person <-> Trigger co-occurrence (within this user's graph)
+        // Person and Trigger co-occurrence (within this user's graph)
         if (ep.person && ep.person.name) {
           await g.query(
             `
@@ -367,7 +367,7 @@ export async function syncSessionToFalkorDB({
     );
   }
 
-  // 6. Update Dedicated User AgentState & Schedule Next Weekly Session
+  // 6. Update Dedicated User AgentState and Schedule Next Weekly Session
   const state = extractedData.agent_state || {};
   const recMode = state.recommended_next_mode || (mode === 'WEEKLY' ? 'DAILY' : 'WEEKLY');
   const urgentFlag = Boolean(state.urgent_flag);

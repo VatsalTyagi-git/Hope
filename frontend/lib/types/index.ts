@@ -28,7 +28,7 @@ export interface SessionSummary {
   id: string;
   conversationId: string;
   title: string;
-  dateLabel: string; // e.g. 'Today • On-demand therapist'
+  dateLabel: string; // e.g. 'Today - On-demand therapist'
   whatWeExplored: string;
   tags: string[];
   carryWithYou: string;

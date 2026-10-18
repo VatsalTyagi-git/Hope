@@ -49,7 +49,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { type Thread, simulatedReply, textMessage, useThreads } from '@/lib/demo-conversations';
+import { type Thread, simulatedReply, textMessage, useThreads, toFirstPersonSummary } from '@/lib/demo-conversations';
 import { OnboardingModal } from '@/components/onboarding/OnboardingModal';
 import { CalendarModal } from '@/components/calendar/CalendarModal';
 import { profileService } from '@/lib/services/profileService';
@@ -126,19 +126,22 @@ export function ChatWorkspace({ threadId }: { threadId?: string }) {
   useEffect(() => {
     let isMounted = true;
     const checkOnboarding = async () => {
-      const isCompleteLocal = profileService.isOnboardingComplete();
-      if (!isCompleteLocal) {
-        try {
-          if (user?.id) {
-            const remote = await profileService.fetchRemoteProfile(user.id);
-            if (isMounted && !remote?.onboardingComplete) {
-              setShowOnboarding(true);
-            }
+      const activeId = user?.id || profileService.getActiveUserId();
+      if (!activeId) return;
+
+      try {
+        const remote = await profileService.fetchRemoteProfile(activeId);
+        if (isMounted) {
+          if (!remote?.onboardingComplete) {
+            setShowOnboarding(true);
           } else {
-            if (isMounted) setShowOnboarding(true);
+            setShowOnboarding(false);
           }
-        } catch {
-          if (isMounted) setShowOnboarding(true);
+        }
+      } catch (err) {
+        console.warn('Could not check remote onboarding:', err);
+        if (isMounted && !profileService.isOnboardingComplete(activeId)) {
+          setShowOnboarding(true);
         }
       }
     };
@@ -708,9 +711,7 @@ export function ChatWorkspace({ threadId }: { threadId?: string }) {
       <main className="chat-main">
         <header className="chat-header">
           <div className="chat-header-start">
-            <Brand compact />
-            <span className="chat-header-divider" />
-            <span>Your quiet space</span>
+            <span className="chat-header-subtitle">Your quiet space</span>
           </div>
           <div className="chat-header-tools">
             <ThemeToggle />
@@ -994,7 +995,7 @@ export function ChatWorkspace({ threadId }: { threadId?: string }) {
               <span>{thread.date} · {thread.agent}</span>
             </div>
             <h3>What we explored</h3>
-            <p>{thread.summary}</p>
+            <p>{toFirstPersonSummary(thread.summary)}</p>
             <h3>Threads of your story</h3>
             <div className="theme-tags">
               {thread.themes.map((t) => (
@@ -1104,7 +1105,7 @@ export function ChatWorkspace({ threadId }: { threadId?: string }) {
       {/* New User Profile Onboarding Pop-up Modal */}
       {showOnboarding && (
         <OnboardingModal
-          userId={user?.id}
+          userId={user?.id || profileService.getActiveUserId() || undefined}
           initialName={user?.name}
           initialEmail={user?.email}
           onComplete={(_p, action) => {

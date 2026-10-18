@@ -78,6 +78,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             });
           }
 
+          if (dbUser) {
+            user.id = dbUser.id;
+          }
+
           if (dbUser && account.providerAccountId) {
             const existingAccount = await prisma.account.findUnique({
               where: {

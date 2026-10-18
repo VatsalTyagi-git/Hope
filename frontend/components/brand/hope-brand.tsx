@@ -20,8 +20,8 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <nav className="nav-start" aria-label="Main navigation">
-        <Link href="/approach">Our approach</Link>
-        <Link href="/therapists">Your therapists</Link>
+        <Link href="/#approach">Our approach</Link>
+        <Link href="/#therapists">Your therapists</Link>
       </nav>
       <Brand />
       <nav className="nav-end" aria-label="Account navigation">
@@ -47,11 +47,7 @@ export function SiteHeader() {
             Log in
           </Link>
         )}
-        <Button asChild variant="outline" className="nav-cta">
-          <Link href="/dashboard">
-            Find your space <span aria-hidden="true">↗</span>
-          </Link>
-        </Button>
+        
         <ThemeToggle />
       </nav>
     </header>

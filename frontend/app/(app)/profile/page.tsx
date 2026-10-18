@@ -62,7 +62,7 @@ export default function ProfilePage() {
     async function loadData() {
       setLoading(true);
       try {
-        const local = profileService.getProfile();
+        const local = profileService.getProfile(user?.id);
         if (local) {
           setName(local.name || user?.name || '');
           setEmail(local.email || user?.email || '');
@@ -110,6 +110,7 @@ export default function ProfilePage() {
 
     try {
       await profileService.updateProfile({
+        id: user?.id,
         name: name.trim() || 'Friend',
         ageRange,
         focusAreas: focusAreas.length > 0 ? focusAreas : ['General Wellbeing'],
@@ -130,18 +131,18 @@ export default function ProfilePage() {
   const avatarInitial = (name || user?.name || 'F').charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#0b0d13] text-slate-100 flex flex-col selection:bg-purple-500/30">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0b0d13] text-slate-800 dark:text-slate-100 flex flex-col selection:bg-purple-500/30 transition-colors duration-200">
       {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-40 w-full border-b border-white/5 bg-[#0b0d13]/80 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-[#0b0d13]/80 backdrop-blur-md px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
         <div className="flex items-center space-x-4">
           <Link
             href="/dashboard"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-white px-3 py-1.5 rounded-full hover:bg-white/5 transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-3 py-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Dashboard</span>
           </Link>
-          <span className="text-white/20">|</span>
+          <span className="text-slate-300 dark:text-white/20">|</span>
           <Brand compact />
         </div>
 
@@ -149,7 +150,7 @@ export default function ProfilePage() {
           <ThemeToggle />
           <Link
             href="/voice?mode=weekly"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-600/20 text-purple-300 border border-purple-500/30 text-xs font-medium hover:bg-purple-600/30 transition-all"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-purple-50 dark:bg-purple-600/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 text-xs font-medium hover:bg-purple-100 dark:hover:bg-purple-600/30 transition-all"
           >
             <AudioLines className="w-3.5 h-3.5" />
             <span>Weekly Session</span>
@@ -161,7 +162,7 @@ export default function ProfilePage() {
               setLoggingOut(true);
               await signOut();
             }}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-red-400/90 hover:text-red-300 hover:bg-red-500/10 px-3 py-1.5 rounded-full transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 px-3 py-1.5 rounded-full transition-colors"
             title="Log out"
           >
             {loggingOut ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />}
@@ -173,41 +174,41 @@ export default function ProfilePage() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-8 space-y-8">
         {/* Profile Hero Header */}
-        <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#161a24] via-[#12151e] to-[#0e1118] p-6 sm:p-8 shadow-2xl">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none -mr-24 -mt-24" />
+        <section className="relative overflow-hidden rounded-3xl border border-slate-200 dark:border-white/10 bg-gradient-to-br from-white via-purple-50/50 to-slate-50 dark:from-[#161a24] dark:via-[#12151e] dark:to-[#0e1118] p-6 sm:p-8 shadow-sm dark:shadow-2xl">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-300/20 dark:bg-purple-600/10 rounded-full blur-3xl pointer-events-none -mr-24 -mt-24" />
 
           <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div className="flex items-center space-x-4 sm:space-x-5">
               <div className="relative">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white text-2xl sm:text-3xl font-serif font-bold shadow-lg shadow-purple-900/30 border-2 border-white/20">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white text-2xl sm:text-3xl font-serif font-bold shadow-lg shadow-purple-600/25 border-2 border-white dark:border-white/20">
                   {avatarInitial}
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-[#12151e]" title="Active Space" />
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-white dark:border-[#12151e]" title="Active Space" />
               </div>
 
               <div>
                 <div className="flex items-center space-x-2.5">
-                  <h1 className="text-2xl sm:text-3xl font-serif text-white tracking-tight">
+                  <h1 className="text-2xl sm:text-3xl font-serif text-slate-900 dark:text-white tracking-tight">
                     {name || 'Your Space'}
                   </h1>
-                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/25">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/25">
                     Personalized
                   </span>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
                   {email || user?.email || 'Confidential Therapeutic Space'}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 mt-3">
-                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/5">
-                    <UserIcon className="w-3 h-3 text-purple-400" />
+                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-2.5 py-0.5 rounded-full border border-slate-200/80 dark:border-white/5">
+                    <UserIcon className="w-3 h-3 text-purple-600 dark:text-purple-400" />
                     Age: {ageRange}
                   </span>
-                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/5">
-                    <Clock className="w-3 h-3 text-purple-400" />
+                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-2.5 py-0.5 rounded-full border border-slate-200/80 dark:border-white/5">
+                    <Clock className="w-3 h-3 text-purple-600 dark:text-purple-400" />
                     Prefers {preferredTime}
                   </span>
-                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 bg-white/5 px-2.5 py-0.5 rounded-full border border-white/5">
-                    <Heart className="w-3 h-3 text-purple-400" />
+                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-white/5 px-2.5 py-0.5 rounded-full border border-slate-200/80 dark:border-white/5">
+                    <Heart className="w-3 h-3 text-purple-600 dark:text-purple-400" />
                     {conversationStyle === 'direct' ? 'Direct CBT' : 'Gentle Listening'}
                   </span>
                 </div>
@@ -217,7 +218,7 @@ export default function ProfilePage() {
             <div className="flex sm:flex-col gap-2 w-full sm:w-auto">
               <Button
                 asChild
-                className="flex-1 sm:flex-none justify-center bg-purple-600 hover:bg-purple-500 text-white rounded-xl shadow-lg shadow-purple-600/30 text-xs"
+                className="flex-1 sm:flex-none justify-center bg-purple-600 hover:bg-purple-500 text-white rounded-xl shadow-md shadow-purple-600/25 text-xs"
               >
                 <Link href="/voice?mode=weekly">
                   <AudioLines className="w-3.5 h-3.5 mr-2" />
@@ -227,7 +228,7 @@ export default function ProfilePage() {
               <Button
                 asChild
                 variant="outline"
-                className="flex-1 sm:flex-none justify-center border-white/10 hover:bg-white/10 text-slate-300 rounded-xl text-xs"
+                className="flex-1 sm:flex-none justify-center border-slate-200 dark:border-white/10 bg-white dark:bg-transparent hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 rounded-xl text-xs"
               >
                 <Link href="/dashboard">
                   <MessageSquare className="w-3.5 h-3.5 mr-2" />
@@ -240,9 +241,9 @@ export default function ProfilePage() {
 
         {/* Success Alert */}
         {savedSuccess && (
-          <div className="animate-in fade-in slide-in-from-top-2 duration-300 p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-200 text-xs flex items-center justify-between">
+          <div className="animate-in fade-in slide-in-from-top-2 duration-300 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-900 dark:text-emerald-200 text-xs flex items-center justify-between shadow-xs">
             <div className="flex items-center space-x-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
               <span>Your profile and preferences have been updated and synced to your space.</span>
             </div>
           </div>
@@ -251,28 +252,28 @@ export default function ProfilePage() {
         {/* Form to Edit Profile */}
         <form onSubmit={handleSave} className="space-y-6">
           {/* Card 1: Personal Details */}
-          <section className="rounded-3xl border border-white/10 bg-[#12151e] p-6 sm:p-8 space-y-6">
+          <section className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12151e] p-6 sm:p-8 space-y-6 shadow-sm dark:shadow-xl">
             <div>
-              <h2 className="text-lg font-serif text-white mb-1">Personal Details</h2>
-              <p className="text-xs text-slate-400">
+              <h2 className="text-lg font-serif text-slate-900 dark:text-white mb-1">Personal Details</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 How Hope identifies and refers to you during voice and text interactions.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">Your Name</label>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Your Name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Alex"
-                  className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500 focus:bg-white dark:focus:bg-white/10 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">Age Range</label>
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">Age Range</label>
                 <div className="grid grid-cols-5 gap-1.5">
                   {AGE_RANGES.map((range) => (
                     <button
@@ -282,7 +283,7 @@ export default function ProfilePage() {
                       className={`py-2 rounded-xl text-xs font-medium transition-all ${
                         ageRange === range
                           ? 'bg-purple-600 text-white shadow-sm'
-                          : 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'
+                          : 'bg-slate-100/70 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/10'
                       }`}
                     >
                       {range}
@@ -293,7 +294,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                 Life Situation & Context Note
               </label>
               <textarea
@@ -301,16 +302,16 @@ export default function ProfilePage() {
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="Share a short summary of what is happening in your life right now (e.g. work challenges, family dynamics, specific stress triggers). Hope incorporates this context into your care."
                 rows={3}
-                className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500 resize-none leading-relaxed"
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500 focus:bg-white dark:focus:bg-white/10 resize-none leading-relaxed transition-all"
               />
             </div>
           </section>
 
           {/* Card 2: Focus Areas */}
-          <section className="rounded-3xl border border-white/10 bg-[#12151e] p-6 sm:p-8 space-y-4">
+          <section className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12151e] p-6 sm:p-8 space-y-4 shadow-sm dark:shadow-xl">
             <div>
-              <h2 className="text-lg font-serif text-white mb-1">Focus Areas</h2>
-              <p className="text-xs text-slate-400">
+              <h2 className="text-lg font-serif text-slate-900 dark:text-white mb-1">Focus Areas</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Select the themes you want your sessions to anchor on.
               </p>
             </div>
@@ -325,12 +326,12 @@ export default function ProfilePage() {
                     onClick={() => toggleFocusArea(area)}
                     className={`flex items-center justify-between p-3 rounded-xl border text-xs font-medium transition-all text-left ${
                       isSelected
-                        ? 'border-purple-500/60 bg-purple-500/15 text-purple-200'
-                        : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                        ? 'border-purple-500/60 bg-purple-50 dark:bg-purple-500/15 text-purple-900 dark:text-purple-200 shadow-xs'
+                        : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'
                     }`}
                   >
                     <span>{area}</span>
-                    {isSelected && <Check className="w-3.5 h-3.5 text-purple-400 flex-shrink-0 ml-1" />}
+                    {isSelected && <Check className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 flex-shrink-0 ml-1" />}
                   </button>
                 );
               })}
@@ -338,28 +339,28 @@ export default function ProfilePage() {
           </section>
 
           {/* Card 3: Therapeutic Tone & Schedule */}
-          <section className="rounded-3xl border border-white/10 bg-[#12151e] p-6 sm:p-8 space-y-6">
+          <section className="rounded-3xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#12151e] p-6 sm:p-8 space-y-6 shadow-sm dark:shadow-xl">
             <div>
-              <h2 className="text-lg font-serif text-white mb-1">Therapeutic Preferences</h2>
-              <p className="text-xs text-slate-400">
+              <h2 className="text-lg font-serif text-slate-900 dark:text-white mb-1">Therapeutic Preferences</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Customize how your companion speaks and when you like to reflect.
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-2">Conversation Tone</label>
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-2">Conversation Tone</label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setConversationStyle('gentle')}
                   className={`p-4 rounded-2xl border text-left transition-all ${
                     conversationStyle === 'gentle'
-                      ? 'border-purple-500/60 bg-purple-500/15 text-purple-200'
-                      : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                      ? 'border-purple-500/60 bg-purple-50 dark:bg-purple-500/15 text-purple-900 dark:text-purple-200 shadow-xs'
+                      : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'
                   }`}
                 >
-                  <div className="text-xs font-semibold mb-1 text-white">Gentle & Empathetic</div>
-                  <div className="text-[11px] text-slate-400">
+                  <div className="text-xs font-semibold mb-1 text-slate-900 dark:text-white">Gentle & Empathetic</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     Patient listening, emotional validation, and soft self-compassion.
                   </div>
                 </button>
@@ -369,12 +370,12 @@ export default function ProfilePage() {
                   onClick={() => setConversationStyle('direct')}
                   className={`p-4 rounded-2xl border text-left transition-all ${
                     conversationStyle === 'direct'
-                      ? 'border-purple-500/60 bg-purple-500/15 text-purple-200'
-                      : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                      ? 'border-purple-500/60 bg-purple-50 dark:bg-purple-500/15 text-purple-900 dark:text-purple-200 shadow-xs'
+                      : 'border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10'
                   }`}
                 >
-                  <div className="text-xs font-semibold mb-1 text-white">Direct & Actionable</div>
-                  <div className="text-[11px] text-slate-400">
+                  <div className="text-xs font-semibold mb-1 text-slate-900 dark:text-white">Direct & Actionable</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     Structured CBT cognitive restructuring, thought records, and momentum.
                   </div>
                 </button>
@@ -383,13 +384,13 @@ export default function ProfilePage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Preferred Check-in Time
                 </label>
                 <select
                   value={preferredTime}
                   onChange={(e) => setPreferredTime(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-[#161a24] text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#161a24] text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                 >
                   <option value="Morning (8:00 AM)">Morning (8:00 AM)</option>
                   <option value="Midday (1:00 PM)">Midday (1:00 PM)</option>
@@ -399,13 +400,13 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
                   Primary Modality
                 </label>
                 <select
                   value={preferredMode}
                   onChange={(e) => setPreferredMode(e.target.value as 'text' | 'voice')}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-white/10 bg-[#161a24] text-xs text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#161a24] text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
                 >
                   <option value="voice">Live Voice Companion</option>
                   <option value="text">Quiet Text Reflections</option>
@@ -415,11 +416,11 @@ export default function ProfilePage() {
           </section>
 
           {/* Privacy Note */}
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-purple-950/20 border border-purple-500/20 text-xs text-purple-200">
-            <ShieldCheck className="w-5 h-5 text-purple-400 flex-shrink-0" />
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-500/20 text-xs text-purple-900 dark:text-purple-200 shadow-xs">
+            <ShieldCheck className="w-5 h-5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
             <div>
-              <strong className="block text-white">Private & Safe Architecture</strong>
-              <p className="text-slate-400 text-[11px] mt-0.5">
+              <strong className="block text-slate-900 dark:text-white">Private & Safe Architecture</strong>
+              <p className="text-slate-600 dark:text-slate-400 text-[11px] mt-0.5">
                 All profile parameters and conversational takeaways are isolated specifically to your therapeutic profile.
               </p>
             </div>
@@ -429,7 +430,7 @@ export default function ProfilePage() {
           <div className="flex items-center justify-between pt-2">
             <Link
               href="/dashboard"
-              className="text-xs text-slate-400 hover:text-white transition-colors"
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               Cancel
             </Link>
@@ -437,7 +438,7 @@ export default function ProfilePage() {
             <Button
               type="submit"
               disabled={saving}
-              className="bg-purple-600 hover:bg-purple-500 text-white rounded-full px-8 py-2.5 text-xs font-medium shadow-lg shadow-purple-600/30"
+              className="bg-purple-600 hover:bg-purple-500 text-white rounded-full px-8 py-2.5 text-xs font-medium shadow-md shadow-purple-600/25"
             >
               {saving ? (
                 <>

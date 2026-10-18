@@ -235,7 +235,7 @@ app.get('/api/memory/stats', async (_req: Request, res: Response) => {
   }
 });
 
-// GET assigned 7-day daily exercise plan for a user (FalkorDB -> PostgreSQL -> Defaults)
+// GET assigned 7-day daily exercise plan for a user (FalkorDB to PostgreSQL to Defaults)
 app.get('/api/exercises/plan/:userId', async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId as string;

@@ -114,7 +114,7 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
       });
 
       setLoadingPlan(true);
-      const uid = p?.id || '0ccbaecf-43fd-4b7f-91e0-d32233482b07';
+      const uid = p?.id || profileService.getActiveUserId() || '0ccbaecf-43fd-4b7f-91e0-d32233482b07';
       fetch(`/api/exercises/plan?userId=${encodeURIComponent(uid)}`)
         .then((res) => res.json())
         .then((data) => {
@@ -286,30 +286,30 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
   const preferredTime = profile?.preferredTime || 'Evening (7:00 PM)';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/60 dark:bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className="relative w-full max-w-4xl max-h-[92vh] bg-[#0f1117] border border-white/10 rounded-3xl shadow-2xl flex flex-col text-slate-100 overflow-hidden"
+        className="relative w-full max-w-4xl max-h-[92vh] bg-white dark:bg-[#0f1117] border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl flex flex-col text-slate-800 dark:text-slate-100 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Subtle Ambient Light Accents */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none -mr-28 -mt-28" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none -ml-28 -mb-28" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-300/20 dark:bg-purple-600/10 rounded-full blur-3xl pointer-events-none -mr-28 -mt-28" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-300/15 dark:bg-indigo-600/10 rounded-full blur-3xl pointer-events-none -ml-28 -mb-28" />
 
         {/* Modal Top Bar */}
-        <div className="relative z-10 flex items-center justify-between px-6 py-4.5 border-b border-white/10 bg-white/[0.02]">
+        <div className="relative z-10 flex items-center justify-between px-6 py-4.5 border-b border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-white/[0.02]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500/20 to-indigo-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 shadow-inner">
-              <CalendarCheck2 className="w-5 h-5 text-purple-400" />
+            <div className="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-gradient-to-br dark:from-purple-500/20 dark:to-indigo-500/20 border border-purple-200 dark:border-purple-500/30 flex items-center justify-center text-purple-700 dark:text-purple-300 shadow-xs">
+              <CalendarCheck2 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-white tracking-tight">Calendar & Schedule</h2>
-                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-500/15 text-amber-300 border border-amber-500/25">
-                  <Flame className="w-3 h-3 text-amber-400" />
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white tracking-tight">Calendar & Schedule</h2>
+                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-amber-100 dark:bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/25">
+                  <Flame className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                   {streakCount}-Day Streak
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Track your weekly clinical appointments and daily CBT practice drills
               </p>
             </div>
@@ -319,7 +319,7 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
             <button
               type="button"
               onClick={goToToday}
-              className="px-3 py-1.5 rounded-xl text-xs font-medium bg-white/5 hover:bg-white/10 text-slate-300 transition-colors border border-white/10"
+              className="px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 transition-colors border border-slate-200 dark:border-white/10"
             >
               Today
             </button>
@@ -327,7 +327,7 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
               type="button"
               onClick={onClose}
               aria-label="Close calendar"
-              className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-colors border border-white/10"
+              className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center transition-colors border border-slate-200 dark:border-white/10"
             >
               <X className="w-4 h-4" />
             </button>
@@ -335,15 +335,15 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
         </div>
 
         {/* Filter Tabs */}
-        <div className="relative z-10 flex items-center justify-between px-6 py-2.5 border-b border-white/5 bg-black/20 text-xs">
-          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/5 border border-white/5">
+        <div className="relative z-10 flex items-center justify-between px-6 py-2.5 border-b border-slate-200 dark:border-white/5 bg-slate-100/60 dark:bg-black/20 text-xs">
+          <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-200/60 dark:bg-white/5 border border-slate-200/80 dark:border-white/5">
             <button
               type="button"
               onClick={() => setActiveTab('all')}
               className={`px-3 py-1 rounded-lg font-medium transition-all ${
                 activeTab === 'all'
                   ? 'bg-purple-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               All Schedule
@@ -354,7 +354,7 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
               className={`px-3 py-1 rounded-lg font-medium transition-all ${
                 activeTab === 'appointments'
                   ? 'bg-purple-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Weekly Appointments
@@ -365,33 +365,33 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
               className={`px-3 py-1 rounded-lg font-medium transition-all ${
                 activeTab === 'exercises'
                   ? 'bg-purple-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Daily Exercises
             </button>
           </div>
 
-          <div className="hidden sm:flex items-center gap-4 text-[11px] text-slate-400">
+          <div className="hidden sm:flex items-center gap-4 text-[11px] text-slate-600 dark:text-slate-400">
             <span className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.6)]" />
               Weekly Clinical Voice
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
               Daily CBT Practice
             </span>
           </div>
         </div>
 
         {/* Modal Body: Split view of Calendar Grid and Detailed Day Schedule */}
-        <div className="relative z-10 flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-white/10">
+        <div className="relative z-10 flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-white/10">
           {/* LEFT: Calendar Grid (7 columns) */}
           <div className="lg:col-span-7 p-6 flex flex-col justify-between">
             <div>
               {/* Month Navigation */}
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-semibold text-white tracking-tight">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white tracking-tight">
                   {monthNames[month]} {year}
                 </h3>
                 <div className="flex items-center gap-1">
@@ -399,7 +399,7 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                     type="button"
                     onClick={prevMonth}
                     aria-label="Previous month"
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors border border-white/5"
+                    className="p-1.5 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200 dark:border-white/5"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
@@ -407,7 +407,7 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                     type="button"
                     onClick={nextMonth}
                     aria-label="Next month"
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-colors border border-white/5"
+                    className="p-1.5 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200 dark:border-white/5"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -455,10 +455,10 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                       onClick={() => setSelectedDate(dateObj)}
                       className={`relative h-14 sm:h-16 p-1.5 rounded-xl border flex flex-col justify-between text-left transition-all group ${
                         isSelected
-                          ? 'border-purple-500 bg-purple-500/15 shadow-[0_0_15px_rgba(147,51,234,0.3)] ring-1 ring-purple-500/50'
+                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/15 shadow-[0_0_15px_rgba(147,51,234,0.2)] dark:shadow-[0_0_15px_rgba(147,51,234,0.3)] ring-1 ring-purple-500/50'
                           : isToday
-                          ? 'border-white/30 bg-white/5 text-white'
-                          : 'border-white/5 bg-white/[0.02] hover:bg-white/[0.06] text-slate-300'
+                          ? 'border-purple-300 dark:border-white/30 bg-purple-50/50 dark:bg-white/5 text-purple-900 dark:text-white'
+                          : 'border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.02] hover:bg-purple-50/60 dark:hover:bg-white/[0.06] text-slate-700 dark:text-slate-300'
                       }`}
                     >
                       <div className="flex items-center justify-between w-full">
@@ -467,15 +467,15 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                             isSelected
                               ? 'bg-purple-600 text-white'
                               : isToday
-                              ? 'bg-white/20 text-white'
-                              : 'text-slate-300'
+                              ? 'bg-purple-200 dark:bg-white/20 text-purple-900 dark:text-white'
+                              : 'text-slate-700 dark:text-slate-300'
                           }`}
                         >
                           {dayNum}
                         </span>
 
                         {isCompleted && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="Completed all exercises" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" title="Completed all exercises" />
                         )}
                       </div>
 
@@ -495,8 +495,8 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                           <span
                             className={`w-2 h-2 rounded-full transition-colors ${
                               isCompleted
-                                ? 'bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]'
-                                : 'bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]'
+                                ? 'bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]'
+                                : 'bg-amber-500 dark:bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]'
                             }`}
                             title={
                               dayPlanItem
@@ -513,14 +513,14 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
             </div>
 
             {/* Quick Helper Banner */}
-            <div className="mt-6 p-3.5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-transparent border border-purple-500/20 flex items-center justify-between">
+            <div className="mt-6 p-3.5 rounded-2xl bg-gradient-to-r from-purple-50 via-indigo-50/50 to-slate-50 dark:from-purple-950/40 dark:via-indigo-950/30 dark:to-transparent border border-purple-200 dark:border-purple-500/20 flex items-center justify-between text-slate-700 dark:text-slate-300">
               <div className="flex items-center gap-2.5">
-                <Sparkles className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                <p className="text-xs text-slate-300">
-                  <span className="text-white font-medium">Synced Therapy Rhythm:</span>{' '}
+                <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+                <p className="text-xs text-slate-700 dark:text-slate-300">
+                  <span className="text-slate-900 dark:text-white font-medium">Synced Therapy Rhythm:</span>{' '}
                   {nextWeeklySession?.formattedDate ? (
                     <>
-                      Next weekly clinical review on <strong className="text-purple-300 font-semibold">{nextWeeklySession.formattedDate}</strong>. Follow your daily drills leading up to it.
+                      Next weekly clinical review on <strong className="text-purple-700 dark:text-purple-300 font-semibold">{nextWeeklySession.formattedDate}</strong>. Follow your daily drills leading up to it.
                     </>
                   ) : (
                     'Weekly sessions explore core schemas, followed by daily 5-min somatic drills.'
@@ -531,15 +531,15 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
           </div>
 
           {/* RIGHT: Selected Day Details & Activities (5 columns) */}
-          <div className="lg:col-span-5 p-6 flex flex-col justify-between bg-black/15">
+          <div className="lg:col-span-5 p-6 flex flex-col justify-between bg-slate-50/70 dark:bg-black/15">
             <div>
               {/* Selected Day Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10 mb-5">
                 <div>
-                  <span className="text-[11px] font-medium text-purple-400 uppercase tracking-wider">
+                  <span className="text-[11px] font-medium text-purple-600 dark:text-purple-400 uppercase tracking-wider">
                     {selectedKey === todayKey ? 'Today’s Agenda' : 'Day Overview'}
                   </span>
-                  <h3 className="text-base font-semibold text-white">
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-white">
                     {selectedDate.toLocaleDateString('en-US', {
                       weekday: 'long',
                       month: 'short',
@@ -550,10 +550,10 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                 </div>
 
                 <div className="text-right">
-                  <span className="text-[11px] font-medium text-slate-400 block">
+                  <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">
                     {dayCompletedCount} of {DEFAULT_EXERCISES.length} completed
                   </span>
-                  <div className="w-24 h-1.5 rounded-full bg-white/10 mt-1.5 overflow-hidden">
+                  <div className="w-24 h-1.5 rounded-full bg-slate-200 dark:bg-white/10 mt-1.5 overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-purple-500 to-emerald-400 transition-all duration-300"
                       style={{
@@ -568,47 +568,47 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
               {(activeTab === 'all' || activeTab === 'appointments') && (
                 <div className="mb-5">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <AudioLines className="w-3.5 h-3.5 text-purple-400" />
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <AudioLines className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                       Weekly Clinical Therapy
                     </span>
                     {isSelectedWeekly && (
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
                         Scheduled
                       </span>
                     )}
                   </div>
 
                   {isSelectedWeekly ? (
-                    <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-900/30 via-purple-950/20 to-black/40 border border-purple-500/30 shadow-lg relative overflow-hidden group">
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-50 via-white to-purple-50/40 dark:from-purple-900/30 dark:via-purple-950/20 dark:to-black/40 border border-purple-200 dark:border-purple-500/30 shadow-sm dark:shadow-lg relative overflow-hidden group">
                       <div className="flex items-start justify-between gap-3 mb-2.5">
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-semibold text-white">
+                            <h4 className="text-sm font-semibold text-slate-900 dark:text-white">
                               Weekly CBT Voice Session with Hope
                             </h4>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30">
                               Synced
                             </span>
                           </div>
-                          <p className="text-xs text-slate-300 mt-0.5">
+                          <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
                             In-depth weekly review, schema discovery & thought restructuring
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-300 mb-3.5">
+                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600 dark:text-slate-300 mb-3.5">
                         <span className="flex items-center gap-1.5">
-                          <Clock className="w-3 h-3 text-purple-400" />
+                          <Clock className="w-3 h-3 text-purple-600 dark:text-purple-400" />
                           {nextWeeklySession?.formattedDate ? `${nextWeeklySession.formattedDate} at ` : ''}{preferredTime}
                         </span>
                         <span className="flex items-center gap-1.5">
-                          <Brain className="w-3 h-3 text-indigo-400" />
+                          <Brain className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
                           Live Voice AI Clinical Practitioner
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                      <div className="flex items-center gap-2 pt-2 border-t border-slate-200 dark:border-white/10">
                         <button
                           type="button"
                           onClick={() => {
@@ -623,12 +623,12 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                       </div>
                     </div>
                   ) : (
-                    <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-xs text-slate-400 flex items-center justify-between">
+                    <div className="p-4 rounded-2xl bg-slate-100/70 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between">
                       <div>
                         <span>No weekly appointment scheduled for this date.</span>
                         {nextWeeklySession?.formattedDate && (
-                          <p className="text-[11px] text-purple-400 mt-1">
-                            Next weekly session synced on <strong className="text-purple-300">{nextWeeklySession.formattedDate}</strong>
+                          <p className="text-[11px] text-purple-600 dark:text-purple-400 mt-1">
+                            Next weekly session synced on <strong className="text-purple-700 dark:text-purple-300">{nextWeeklySession.formattedDate}</strong>
                           </p>
                         )}
                       </div>
@@ -637,7 +637,7 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                           <button
                             type="button"
                             onClick={jumpToNextWeeklySession}
-                            className="px-2.5 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 text-[11px] font-medium transition-colors"
+                            className="px-2.5 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-500/15 dark:hover:bg-purple-500/25 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 text-[11px] font-medium transition-colors"
                           >
                             Jump to Date
                           </button>
@@ -648,7 +648,7 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                             onClose();
                             router.push('/voice?mode=weekly');
                           }}
-                          className="text-purple-400 hover:text-purple-300 font-medium inline-flex items-center gap-1 text-xs"
+                          className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium inline-flex items-center gap-1 text-xs"
                         >
                           Start anytime <ArrowRight className="w-3 h-3" />
                         </button>
@@ -662,11 +662,11 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
               {(activeTab === 'all' || activeTab === 'exercises') && (
                 <div>
                   <div className="flex items-center justify-between mb-2.5">
-                    <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <Activity className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <Activity className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       Daily CBT Exercises & Drills
                     </span>
-                    <span className="text-[11px] text-slate-400">Click to complete</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">Click to complete</span>
                   </div>
 
                   <div className="space-y-3">
@@ -675,37 +675,37 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                       <div
                         className={`p-4 rounded-2xl border transition-all ${
                           Boolean(completedMap[selectedKey]?.[`day_${assignedDayExercise.day_number}`])
-                            ? 'bg-emerald-950/20 border-emerald-500/30'
-                            : 'bg-gradient-to-br from-purple-950/30 via-indigo-950/20 to-black/40 border-purple-500/30 shadow-lg'
+                            ? 'bg-emerald-50/80 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-500/30'
+                            : 'bg-gradient-to-br from-purple-50/90 via-white to-slate-50 dark:from-purple-950/30 dark:via-indigo-950/20 dark:to-black/40 border-purple-200 dark:border-purple-500/30 shadow-sm dark:shadow-lg'
                         }`}
                       >
                         <div className="flex items-start gap-3">
                           <button
                             type="button"
                             onClick={() => toggleExercise(`day_${assignedDayExercise.day_number}`)}
-                            className="mt-1 text-slate-400 hover:text-emerald-400 transition-colors flex-shrink-0"
+                            className="mt-1 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex-shrink-0"
                             title="Mark completed"
                           >
                             {Boolean(completedMap[selectedKey]?.[`day_${assignedDayExercise.day_number}`]) ? (
-                              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                             ) : (
-                              <Circle className="w-5 h-5 text-purple-400 hover:text-purple-300" />
+                              <Circle className="w-5 h-5 text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300" />
                             )}
                           </button>
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2 mb-1">
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 uppercase tracking-wider">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 uppercase tracking-wider">
                                   Day {assignedDayExercise.day_number} Assigned Drill
                                 </span>
                                 {assignedDayExercise.assigned_date && (
-                                  <span className="text-[10px] font-medium text-purple-300/80">
+                                  <span className="text-[10px] font-medium text-purple-700 dark:text-purple-300/80">
                                     • {assignedDayExercise.assigned_date === todayKey ? 'Active Today' : new Date(assignedDayExercise.assigned_date + 'T12:00:00Z').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                   </span>
                                 )}
                               </div>
-                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/5 text-slate-400 border border-white/5">
+                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/5">
                                 {assignedDayExercise.recommended_duration_mins || 5} mins
                               </span>
                             </div>
@@ -713,36 +713,36 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                             <h4
                               className={`text-sm font-semibold transition-all ${
                                 Boolean(completedMap[selectedKey]?.[`day_${assignedDayExercise.day_number}`])
-                                  ? 'text-slate-400 line-through'
-                                  : 'text-white'
+                                  ? 'text-slate-400 dark:text-slate-500 line-through'
+                                  : 'text-slate-900 dark:text-white'
                               }`}
                             >
                               {assignedDayExercise.exercise_name}
                             </h4>
 
-                            <p className="text-[11px] text-purple-300/90 font-medium mt-0.5">
+                            <p className="text-[11px] text-purple-700 dark:text-purple-300/90 font-medium mt-0.5">
                               Focus: {assignedDayExercise.focus_area}
                             </p>
 
-                            <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                            <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
                               {assignedDayExercise.instruction}
                             </p>
 
                             {/* Tailored Voice Coaching Question Box */}
                             {assignedDayExercise.target_question && (
-                              <div className="mt-2.5 p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-200">
-                                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-purple-300 uppercase tracking-wider mb-1">
-                                  <MessageSquareQuote className="w-3.5 h-3.5 text-purple-400" />
+                              <div className="mt-2.5 p-3 rounded-xl bg-purple-100/60 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 text-purple-950 dark:text-purple-200">
+                                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider mb-1">
+                                  <MessageSquareQuote className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
                                   Hope&apos;s Daily Coaching Question
                                 </div>
-                                <p className="text-xs italic text-purple-100 leading-snug">
+                                <p className="text-xs italic text-purple-900 dark:text-purple-100 leading-snug">
                                   &ldquo;{assignedDayExercise.target_question}&rdquo;
                                 </p>
                               </div>
                             )}
 
-                            <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-white/10">
-                              <span className="text-[10px] text-slate-400">
+                            <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-200 dark:border-white/10">
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400">
                                 Daily Voice Coach Practice
                               </span>
                               <button
@@ -772,20 +772,20 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                           key={ex.id}
                           className={`p-3.5 rounded-2xl border transition-all ${
                             isDone
-                              ? 'bg-emerald-950/20 border-emerald-500/30'
-                              : 'bg-white/[0.03] border-white/10 hover:border-white/20'
+                              ? 'bg-emerald-50/80 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-500/30'
+                              : 'bg-white dark:bg-white/[0.03] border-slate-200 dark:border-white/10 hover:border-purple-200 dark:hover:border-white/20 shadow-xs'
                           }`}
                         >
                           <div className="flex items-start gap-3">
                             <button
                               type="button"
                               onClick={() => toggleExercise(ex.id)}
-                              className="mt-0.5 text-slate-400 hover:text-emerald-400 transition-colors flex-shrink-0"
+                              className="mt-0.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex-shrink-0"
                             >
                               {isDone ? (
-                                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                               ) : (
-                                <Circle className="w-5 h-5 text-slate-500 hover:text-slate-300" />
+                                <Circle className="w-5 h-5 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300" />
                               )}
                             </button>
 
@@ -793,21 +793,21 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                               <div className="flex items-center justify-between gap-2">
                                 <h4
                                   className={`text-xs font-semibold transition-all ${
-                                    isDone ? 'text-slate-400 line-through' : 'text-white'
+                                    isDone ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-900 dark:text-white'
                                   }`}
                                 >
                                   {ex.title}
                                 </h4>
-                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/5 text-slate-400 border border-white/5">
+                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/5">
                                   {ex.duration}
                                 </span>
                               </div>
 
-                              <p className="text-[11px] text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                              <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
                                 {ex.description}
                               </p>
 
-                              <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5 text-[10px] text-slate-400">
+                              <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-white/5 text-[10px] text-slate-500 dark:text-slate-400">
                                 <span>{ex.timeOfDay}</span>
                                 {ex.linkMode && (
                                   <button
@@ -816,7 +816,7 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                                       onClose();
                                       router.push(`/voice?mode=${ex.linkMode}`);
                                     }}
-                                    className="text-purple-400 hover:text-purple-300 font-medium inline-flex items-center gap-1"
+                                    className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium inline-flex items-center gap-1"
                                   >
                                     Launch Practice Check-in <ArrowRight className="w-2.5 h-2.5" />
                                   </button>
@@ -833,9 +833,9 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
             </div>
 
             {/* Bottom Actions */}
-            <div className="pt-4 mt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+            <div className="pt-4 mt-4 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
               <span className="text-[11px]">
-                Preferred weekly slot: <strong className="text-slate-200">{preferredTime}</strong>
+                Preferred weekly slot: <strong className="text-slate-800 dark:text-slate-200">{preferredTime}</strong>
               </span>
               <button
                 type="button"
@@ -843,7 +843,7 @@ export function CalendarModal({ isOpen, onClose }: CalendarModalProps) {
                   onClose();
                   router.push('/profile');
                 }}
-                className="text-purple-400 hover:text-purple-300 underline font-medium"
+                className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 underline font-medium"
               >
                 Change in Profile
               </button>

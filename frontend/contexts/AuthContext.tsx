@@ -10,6 +10,7 @@ export interface HopeUser {
   name: string;
   image?: string;
   fullName?: string;
+  onboardingComplete?: boolean;
   user_metadata?: {
     fullName?: string;
     full_name?: string;
@@ -141,6 +142,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: dbUser.id,
         email: dbUser.email,
         name: dbUser.name,
+        image: dbUser.image,
+        onboardingComplete: Boolean(dbUser.onboardingComplete),
         user_metadata: {
           fullName: dbUser.name,
           full_name: dbUser.name,
@@ -149,6 +152,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       if (typeof window !== 'undefined') {
+        const oldProfileRaw = localStorage.getItem('hope_user_profile');
+        if (oldProfileRaw) {
+          try {
+            const oldP = JSON.parse(oldProfileRaw);
+            if (oldP && oldP.id && oldP.id !== loggedInUser.id) {
+              localStorage.removeItem('hope_user_profile');
+            }
+          } catch {
+            localStorage.removeItem('hope_user_profile');
+          }
+        }
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(loggedInUser));
         setPatientCookie(loggedInUser.id);
       }
@@ -189,6 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: dbUser.id,
         email: dbUser.email,
         name: dbUser.name,
+        onboardingComplete: false,
         user_metadata: {
           fullName: dbUser.name,
           full_name: dbUser.name,
@@ -196,6 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
 
       if (typeof window !== 'undefined') {
+        localStorage.removeItem('hope_user_profile');
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(newUser));
         localStorage.setItem('hope_new_user_first_session', 'true');
         setPatientCookie(newUser.id);
@@ -220,8 +236,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (typeof window !== 'undefined') {
         localStorage.removeItem(USER_STORAGE_KEY);
+        localStorage.removeItem('hope_user_profile');
         localStorage.removeItem('hope_new_user_first_session');
         localStorage.removeItem('hope_voice_session_turns');
+        // Clear any user-scoped profile keys
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith('hope_user_profile_') || key.startsWith('hope_profile_'))) {
+            localStorage.removeItem(key);
+          }
+        }
         sessionStorage.clear();
         clearPatientCookie();
       }

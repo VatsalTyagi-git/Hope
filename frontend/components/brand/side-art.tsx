@@ -1,5 +1,5 @@
 /**
- * Purple side glows with four illustrations (0° straight rotation, 70% opacity, fade-in edge).
+ * Purple side glows with four illustrations (0 degrees straight rotation, 70% opacity, fade-in edge).
  */
 export function SideArt() {
   return (

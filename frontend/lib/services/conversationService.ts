@@ -1,5 +1,6 @@
 import { CompanionType, Conversation, Message, SessionSummary } from '../types';
 import { COMPANIONS } from './companionService';
+import { toFirstPersonSummary } from '../demo-conversations';
 
 const CONVERSATIONS_STORAGE_KEY = 'hope_conversations_list';
 
@@ -91,7 +92,7 @@ const SEED_CONVERSATIONS: Conversation[] = [
       title: 'Midday Grounding for Stakeholder Demo',
       dateLabel: 'Today • On-demand therapist',
       whatWeExplored:
-        'The patient experienced acute performance anxiety prior to a cross-team stakeholder demo. Utilized a 4-7-8 breathing intervention to regulate physiological stress response and provided cognitive reframing to normalize high stakes.',
+        'We focused on your experience of acute performance anxiety prior to a cross-team stakeholder demo. Together, we utilized a 4-7-8 breathing practice to regulate the physical stress response and developed a cognitive reframe to normalize the situation.',
       tags: ['Performance Anxiety', 'Fortune Telling', '4-7-8 Breathing'],
       carryWithYou: 'This demo is just a conversation, and I am prepared.',
       createdAt: '2026-10-16T21:01:01.809Z',
@@ -143,7 +144,7 @@ const SEED_CONVERSATIONS: Conversation[] = [
       title: 'Work-Life Boundaries with Julian',
       dateLabel: 'Yesterday • Weekly main therapist',
       whatWeExplored:
-        "Elena identified a 'Should Statement' regarding her professional responsiveness that led to overworking. Successfully applied cognitive reframing to prioritize mental clarity and established an 8 PM cutoff.",
+        "We identified a rigid 'Should Statement' regarding professional responsiveness that was leading to late-night overworking. Together, we explored cognitive reframing to protect your mental clarity and established an 8 PM laptop boundary with Julian.",
       tags: ['Should Statements', 'Boundaries', 'Work Stress'],
       carryWithYou:
         'Closing my laptop at 8 PM protects my mental clarity, which allows me to write better architecture code the next morning.',
@@ -185,7 +186,7 @@ const SEED_CONVERSATIONS: Conversation[] = [
       title: 'Morning Physiological Sigh & Standup with Clara',
       dateLabel: 'Yesterday • Daily exercise therapist',
       whatWeExplored:
-        'Elena successfully utilized physiological sigh breathing to regulate her nervous system before a work-related trigger. By applying this tool, she shifted from anticipated dread to steady presence with Clara.',
+        'We reviewed your successful practice of physiological sigh breathing to regulate your nervous system before work triggers. By applying this technique, you shifted from anticipated dread to feeling steady and grounded during collaboration with Clara.',
       tags: ['Somatic Regulation', 'Fortune Telling', 'Daily Practice'],
       carryWithYou: 'Continue daily physiological sigh breathing before known work triggers.',
       createdAt: '2026-10-16T21:00:51.050Z',
@@ -260,7 +261,7 @@ const SEED_CONVERSATIONS: Conversation[] = [
       title: 'Project Aurora Presentation & Marcus Critique',
       dateLabel: 'Yesterday • Weekly main therapist',
       whatWeExplored:
-        'Elena presented with acute work-related anxiety triggered by a public critique from Marcus. Through Socratic questioning and evidence-based reframing, she successfully identified cognitive distortions and shifted to a balanced view.',
+        'We explored acute work-related anxiety triggered by feedback from your engineering director Marcus. Through Socratic dialogue and evidence examination, we identified cognitive distortions and shifted from a catastrophic spiral to a balanced, grounded view of your competence.',
       tags: ['Catastrophizing', 'All-or-Nothing Thinking', 'Work Anxiety'],
       carryWithYou:
         'Feedback is data for growth, not a verdict on your worth. Complete your 5-minute morning physiological sigh and 3-column thought record.',
@@ -349,7 +350,7 @@ export const conversationService = {
           conversationId: sess.id,
           title,
           dateLabel,
-          whatWeExplored: sess.summary || 'You engaged in a meaningful therapeutic dialogue with Hope.',
+          whatWeExplored: toFirstPersonSummary(sess.summary || 'We engaged in a meaningful therapeutic dialogue together.'),
           tags: ep.distortion
             ? [ep.distortion, ep.trigger?.category || 'Work Stress', 'Cognitive Restructuring']
             : ['Cognitive reframe', 'Emotional awareness', 'Self-compassion'],

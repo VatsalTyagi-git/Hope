@@ -91,7 +91,7 @@ export const demoThreads: Thread[] = [
       ),
     ],
     summary:
-      'The patient experienced acute performance anxiety prior to a cross-team stakeholder demo. The assistant utilized a 4-7-8 breathing intervention to regulate physiological stress response and provided a cognitive reframe to normalize the high-stakes situation.',
+      'We focused on your experience of acute performance anxiety prior to a cross-team stakeholder demo. Together, we utilized a 4-7-8 breathing practice to regulate the physical stress response and developed a cognitive reframe to normalize the situation.',
     themes: ['Performance Anxiety', 'Fortune Telling', '4-7-8 Breathing'],
     takeaway: 'This demo is just a conversation, and I am prepared.',
     ended: true,
@@ -131,7 +131,7 @@ export const demoThreads: Thread[] = [
       ),
     ],
     summary:
-      "Elena identified a 'Should Statement' regarding her professional responsiveness that led to overworking. She successfully applied cognitive reframing to prioritize her mental clarity and wellbeing, resulting in an 8 PM laptop boundary with Julian.",
+      "We identified a rigid 'Should Statement' regarding professional responsiveness that was leading to late-night overworking. Together, we explored cognitive reframing to protect your mental clarity and established an 8 PM laptop boundary with Julian.",
     themes: ['Should Statements', 'Boundaries', 'Work Stress'],
     takeaway:
       'Closing my laptop at 8 PM protects my mental clarity, which allows me to write better architecture code the next morning.',
@@ -162,7 +162,7 @@ export const demoThreads: Thread[] = [
       ),
     ],
     summary:
-      'Elena successfully utilized physiological sigh breathing to regulate her nervous system before a work-related trigger. By applying this tool, she shifted from a state of anticipated dread to feeling steady during collaboration with Clara.',
+      'We reviewed your successful practice of physiological sigh breathing to regulate your nervous system before work triggers. By applying this technique, you shifted from anticipated dread to feeling steady and grounded during collaboration with Clara.',
     themes: ['Somatic Regulation', 'Fortune Telling', 'Daily Practice'],
     takeaway: 'Continue daily physiological sigh breathing before known work triggers.',
     ended: true,
@@ -217,7 +217,7 @@ export const demoThreads: Thread[] = [
       ),
     ],
     summary:
-      'Elena presented with acute work-related anxiety triggered by a public critique from her manager Marcus. Through Socratic questioning and evidence-based reframing, she successfully identified cognitive distortions and shifted from a catastrophic perspective to a balanced, evidence-based view of her competence.',
+      'We explored acute work-related anxiety triggered by feedback from your engineering director Marcus. Through Socratic dialogue and evidence examination, we identified cognitive distortions and shifted from a catastrophic spiral to a balanced, grounded view of your competence.',
     themes: ['Catastrophizing', 'All-or-Nothing Thinking', 'Work Anxiety'],
     takeaway:
       'Feedback is data for growth, not a verdict on your worth. Complete your 5-minute morning physiological sigh and 3-column thought record.',
@@ -384,6 +384,80 @@ export function deriveObjectiveTitle(s: any): string {
   return 'Mindful Centering & Grounding';
 }
 
+/**
+ * Normalizes any clinical third-person phrasing into first-person plural
+ * ("We explored...", "We discussed...", "Together, we identified...").
+ */
+export function toFirstPersonSummary(summary: string): string {
+  if (!summary || typeof summary !== 'string') return summary;
+
+  let text = summary.trim();
+
+  // Sentence beginnings
+  text = text
+    .replace(/^the\s+(?:patient|client)\s+initiated\s+the\s+conversation\s+(?:by\s+)?expressing\s+/i, 'We began by exploring ')
+    .replace(/^the\s+(?:patient|client)\s+initiated\s+contact\s+(?:to\s+discuss|expressing|seeking)\s+/i, 'We connected to explore ')
+    .replace(/^the\s+(?:patient|client)\s+(?:reached\s+out|came\s+in)\s+(?:to\s+discuss|feeling|seeking|expressing)\s+/i, 'We connected to explore ')
+    .replace(/^the\s+(?:patient|client)\s+(?:sought\s+support\s+to|presented\s+with|sought\s+help\s+with)\s+/i, 'We focused on ')
+    .replace(/^the\s+(?:patient|client)\s+explored\s+/i, 'We explored ')
+    .replace(/^the\s+(?:patient|client)\s+discussed\s+/i, 'We discussed ')
+    .replace(/^the\s+(?:patient|client)\s+shared\s+/i, 'You shared ')
+    .replace(/^the\s+(?:patient|client)\s+described\s+/i, 'You described ')
+    .replace(/^the\s+(?:patient|client)\s+reported\s+/i, 'You shared ')
+    .replace(/^the\s+(?:patient|client)\s+stated\s+/i, 'You reflected that ')
+    .replace(/^the\s+(?:patient|client)\s+expressed\s+/i, 'We explored your feelings of ')
+    .replace(/^the\s+(?:patient|client)\s+experienced\s+/i, 'We focused on your experience of ')
+    .replace(/^the\s+(?:patient|client)\s+struggled\s+with\s+/i, 'We looked into the challenges around ')
+    .replace(/^the\s+(?:patient|client)\s+reflected\s+on\s+/i, 'We reflected together on ')
+    .replace(/^the\s+(?:patient|client)\s+navigated\s+/i, 'We navigated ')
+    .replace(/^the\s+(?:patient|client)\s+identified\s+/i, 'Together, we identified ');
+
+  // Mid-sentence replacements
+  text = text
+    .replace(/which\s+they\s+reported\s+was\s+leading\s+to/gi, 'and how it was contributing to')
+    .replace(/which\s+they\s+felt\s+was/gi, 'which felt like it was')
+    .replace(/which\s+the\s+(?:patient|client)\s+reported\s+/gi, 'which you noted ')
+    .replace(/(?:the\s+)?companion\s+validated\s+their\s+feelings\s+and\s+explored/gi, 'We validated these feelings and explored')
+    .replace(/(?:the\s+)?companion\s+(?:and\s+the\s+patient|guided\s+the\s+patient\s+to|helped\s+the\s+patient\s+to)/gi, 'we worked together to')
+    .replace(/(?:the\s+)?companion\s+guided\s+them\s+to/gi, 'we worked together to')
+    .replace(/(?:the\s+)?companion\s+introduced\s+/gi, 'we introduced ')
+    .replace(/(?:the\s+)?companion\s+explored\s+/gi, 'we explored ')
+    .replace(/(?:the\s+)?companion\s+provided\s+/gi, 'we practiced ')
+    .replace(/(?:the\s+)?companion\s+suggested\s+/gi, 'we explored ')
+    .replace(/(?:the\s+)?companion\s+encouraged\s+/gi, 'we encouraged ')
+    .replace(/(?:the\s+)?companion\s+helped\s+/gi, 'we worked to ')
+    .replace(/(?:the\s+)?companion\s+validated\s+/gi, 'we validated ')
+    .replace(/leading\s+(?:to\s+)?the\s+(?:patient|client)\s+to\s+identify/gi, 'helping you identify')
+    .replace(/leading\s+(?:to\s+)?the\s+(?:patient|client)\s+to\s+/gi, 'guiding you to ')
+    .replace(/(?:the\s+)?(?:patient|client)\s+later\s+expressed\s+a\s+desire\s+to\s+/gi, 'We also discussed your desire to ')
+    .replace(/(?:the\s+)?(?:patient|client)\s+also\s+expressed\s+/gi, 'You also shared ')
+    .replace(/(?:the\s+)?(?:patient|client)\s+noted\s+/gi, 'You noted ')
+    .replace(/indicating\s+a\s+need\s+for\s+more\s+in-depth\s+cognitive\s+work/gi, 'laying the groundwork for deeper cognitive reflection together')
+    .replace(/the\s+(?:patient|client)'s/gi, 'your')
+    .replace(/\b(?:patient|client)'s\b/gi, 'your')
+    .replace(/the\s+(?:patient|client)\b/gi, 'you')
+    .replace(/the\s+companion\b/gi, 'we')
+    .replace(/\btheir\s+(feelings|thoughts|emotions|anxiety|concerns|fear|fears|reaction|reactions|situation|work|life|mind|goals|progress|triggers)\b/gi, 'your $1')
+    .replace(/\bto\s+challenge\s+their\b/gi, 'to challenge your')
+    .replace(/\bfrom\s+their\b/gi, 'from your')
+    .replace(/\babout\s+their\b/gi, 'about your')
+    .replace(/\bwith\s+their\b/gi, 'with your')
+    .replace(/\binto\s+their\b/gi, 'into your')
+    .replace(/\bfor\s+their\b/gi, 'for your');
+
+  // Capitalize sentence beginnings
+  text = text.replace(/(?:^|[.!?]\s+)([a-z])/g, (_, letter) => letter.toUpperCase());
+
+  // Clean up any duplicates
+  text = text
+    .replace(/\bwe\s+we\b/gi, 'we')
+    .replace(/\byou\s+you\b/gi, 'you')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  return text;
+}
+
 export function formatSessionToThread(s: any): Thread {
   const room = String(s.roomName || '').toLowerCase();
   const ext = s.rawTranscript?.extractedData || {};
@@ -417,7 +491,8 @@ export function formatSessionToThread(s: any): Thread {
     )
   );
 
-  const summary = s.summary || ext.summary || 'A therapeutic reflection focused on understanding patterns and cognitive reframing.';
+  const rawSummary = s.summary || ext.summary || 'A therapeutic reflection focused on understanding patterns and cognitive reframing.';
+  const summary = toFirstPersonSummary(rawSummary);
   const themes = ep.distortion
     ? [ep.distortion, ep.trigger?.category || 'Work Stress', 'Cognitive Restructuring']
     : (s.themes || ['Cognitive Restructuring', 'Self-Compassion']);

@@ -113,13 +113,11 @@ class GraphMemoryManager:
                 self._offline_until = time.time() + 10.0
             return EmptyResultSet([])
 
-    # --------------------------------------------------------------------------
-    # 1. SCHEMA INITIALIZATION & INDEXING (USER-ISOLATED SCHEMA)
-    # --------------------------------------------------------------------------
+    # 1. SCHEMA INITIALIZATION AND INDEXING (USER-ISOLATED SCHEMA)
     def init_schema(self) -> None:
         """Creates primary-key and search indexes for all user-isolated node labels."""
         indexes = [
-            # Layer A: History & Multi-Agent Coordination
+            # Layer A: History and Multi-Agent Coordination
             ("User", "id"),
             ("Companion", "id"),
             ("Companion", "userId"),
@@ -173,9 +171,7 @@ class GraphMemoryManager:
         self.query("MATCH (n) DETACH DELETE n")
         logger.info("FalkorDB completely cleared.")
 
-    # --------------------------------------------------------------------------
-    # 2. USER & AGENT STATE COORDINATION (ISOLATED PER USER)
-    # --------------------------------------------------------------------------
+    # 2. USER AND AGENT STATE COORDINATION (ISOLATED PER USER)
     def ensure_user(
         self, user_id: str, name: str = "User", baseline_anxiety: int = 5
     ) -> None:
@@ -302,9 +298,7 @@ class GraphMemoryManager:
                 {"user_id": user_id, "homework": active_homework, "now": now, "target_days": target_days},
             )
 
-    # --------------------------------------------------------------------------
-    # 3. SESSION & CHRONOLOGICAL SPINE (SCOPED PER USER, CONNECTED TO USER)
-    # --------------------------------------------------------------------------
+    # 3. SESSION AND CHRONOLOGICAL SPINE (SCOPED PER USER, CONNECTED TO USER)
     def record_session(
         self,
         user_id: str,
@@ -464,9 +458,7 @@ class GraphMemoryManager:
             logger.warning(f"FalkorDB: error deleting session {session_id}: {e}")
             return False
 
-    # --------------------------------------------------------------------------
     # 4. HANDOFF MANAGEMENT (SCOPED PER USER)
-    # --------------------------------------------------------------------------
     def create_handoff(
         self,
         session_id: str,
@@ -508,9 +500,7 @@ class GraphMemoryManager:
             },
         )
 
-    # --------------------------------------------------------------------------
-    # 5. EPISODIC & SEMANTIC CBT MEMORY INSERTION (SCOPED PER USER)
-    # --------------------------------------------------------------------------
+    # 5. EPISODIC AND SEMANTIC CBT MEMORY INSERTION (SCOPED PER USER)
     def record_episode(
         self,
         session_id: str,
@@ -603,7 +593,7 @@ class GraphMemoryManager:
                 },
             )
 
-        # 4. Link Person <-> Trigger co-occurrence (within user's tree)
+        # 4. Link Person and Trigger co-occurrence (within user's tree)
         if person_name and trigger_name:
             self.query(
                 """
@@ -634,7 +624,7 @@ class GraphMemoryManager:
                 },
             )
 
-            # Trigger -> Distortion weight (scoped to userId)
+            # Trigger to Distortion weight (scoped to userId)
             if trigger_name:
                 self.query(
                     """
@@ -714,9 +704,7 @@ class GraphMemoryManager:
             },
         )
 
-    # --------------------------------------------------------------------------
-    # 6. PROCEDURAL RULES & PERSONALIZATION (SCOPED PER USER)
-    # --------------------------------------------------------------------------
+    # 6. PROCEDURAL RULES AND PERSONALIZATION (SCOPED PER USER)
     def add_therapist_rule(
         self,
         user_id: str,
@@ -740,9 +728,7 @@ class GraphMemoryManager:
             },
         )
 
-    # --------------------------------------------------------------------------
     # 7. ON-THE-SPOT TURN-BASED RETRIEVAL (1-2 HOP)
-    # --------------------------------------------------------------------------
     def recall_memory_on_spot(self, user_id: str, query_topic: str) -> str:
         """Called live during an agent turn when a user mentions a person, trigger, event, past incident, or homework."""
         topic_clean = query_topic.strip().lower()
@@ -822,7 +808,7 @@ class GraphMemoryManager:
             for r in s_res.result_set:
                 facts.append(f"- Prior Session Record: \"{r[0]}\"")
 
-        # 4. CBT Exercises & Procedural Playbook (Layer D - scoped to user's tree)
+        # 4. CBT Exercises and Procedural Playbook (Layer D: scoped to user's tree)
         ex_cypher = """
         MATCH (ex:CBTExercise {userId: $uid})
         WHERE toLower(ex.name) CONTAINS $topic
@@ -1030,9 +1016,7 @@ class GraphMemoryManager:
 
         return "\n".join(facts)
 
-    # --------------------------------------------------------------------------
     # 8. SESSION-START RETRIEVAL SYSTEM (BOOTSTRAP MEMORY)
-    # --------------------------------------------------------------------------
     def get_session_start_context(self, user_id: str) -> dict[str, Any]:
         """Retrieves all 4 layers of CBT memory for the user from FalkorDB at session start."""
         # 1. User details
@@ -1055,7 +1039,7 @@ class GraphMemoryManager:
                 "bio": row[8] or "",
             }
 
-        # 2. AgentState & Active Homework (Layer A)
+        # 2. AgentState and Active Homework (Layer A)
         state_res = self.query(
             """
             MATCH (u:User {id: $uid})-[:HAS_STATE]->(a:AgentState)
@@ -1103,7 +1087,7 @@ class GraphMemoryManager:
                 "companion_mode": row[7],
             }
 
-        # 4. Episodes from latest session (Layer B & C)
+        # 4. Episodes from latest session (Layer B and C)
         episodes: list[dict[str, Any]] = []
         ep_res = self.query(
             """
@@ -1148,7 +1132,7 @@ class GraphMemoryManager:
             if row[0]:
                 rules.append(row[0])
 
-        # 6. Overall Triggers & Persons for this user (Layer C - traversing user tree)
+        # 6. Overall Triggers and Persons for this user (Layer C: traversing user tree)
         triggers_res = self.query(
             """
             MATCH (u:User {id: $uid})-[:HAS_SESSION]->(s:Session)-[:CAPTURED_EPISODE]->(e:Episode)-[:SPARKED_BY]->(t:Trigger)
@@ -1288,9 +1272,7 @@ class GraphMemoryManager:
         target_question = today_ex.get("target_question", "How did today's exercise feel for you?")
         duration = today_ex.get("duration_mins", 5)
 
-        # -------------------------------------------------------------
-        # DAILY EXERCISE MODE: Dedicated focused briefing with today's assigned exercise & target question
-        # -------------------------------------------------------------
+        # DAILY EXERCISE MODE: Dedicated focused briefing with today's assigned exercise and target question
         if mode_upper == "DAILY":
             state = ctx.get("state", {})
             return (
@@ -1300,7 +1282,7 @@ class GraphMemoryManager:
                 f"- Current Homework Streak: {state.get('homework_streak', 0)} days\n"
                 f"- Overall Assigned Homework: {state.get('active_homework', ex_name)}\n"
                 f"{profile_section}\n"
-                f"## 🎯 TODAY'S ASSIGNED CBT EXERCISE (Day {day_num} of 7: {ex_name}):\n"
+                f"## TODAY'S ASSIGNED CBT EXERCISE (Day {day_num} of 7: {ex_name}):\n"
                 f"- Day Title: {day_title}\n"
                 f"- Focus Area: {focus_area}\n"
                 f"- Exercise Instruction: {instruction}\n"

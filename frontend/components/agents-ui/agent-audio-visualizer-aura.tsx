@@ -9,7 +9,7 @@
  * Licensed under the Polyform Non-Resale License 1.0.0
  * https://polyformproject.org/licenses/non-resale/1.0.0/
  *
- * © 2026 UNCRN LLC
+ * Copyright (c) 2026 UNCRN LLC
  */
 import React, { type ComponentProps, useMemo } from 'react';
 import { type VariantProps, cva } from 'class-variance-authority';

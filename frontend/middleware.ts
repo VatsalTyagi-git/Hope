@@ -24,9 +24,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(dashboardUrl);
   }
 
+  const isProtectedRoute =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/profile') ||
+    pathname.startsWith('/voice') ||
+    pathname.startsWith('/chat');
+
+  if (!isUserLoggedIn && isProtectedRoute) {
+    const loginUrl = new URL('/login', request.url);
+    return NextResponse.redirect(loginUrl);
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/login', '/signup'],
+  matcher: ['/login', '/signup', '/dashboard/:path*', '/profile/:path*', '/voice/:path*', '/chat/:path*'],
 };

@@ -29,9 +29,7 @@ load_dotenv(".env.local")
 
 logger = logging.getLogger("cbt_chatbot")
 
-# ==============================================================================
-# CBT CHAT PERSONA & CLINICAL PROMPTS
-# ==============================================================================
+# CBT CHAT PERSONA AND CLINICAL PROMPTS
 
 CHAT_CORE_DIRECTIVE = textwrap.dedent(
     """\
@@ -130,9 +128,7 @@ def get_system_prompt_for_mode(mode: str) -> str:
     return ON_DEMAND_CHAT_PROMPT
 
 
-# ==============================================================================
 # TOOL DEFINITIONS (FalkorDB Turn Recall Tool for Gemini)
-# ==============================================================================
 
 RECALL_TOOL = types.Tool(
     function_declarations=[

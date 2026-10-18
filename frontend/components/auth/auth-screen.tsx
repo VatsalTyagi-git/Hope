@@ -102,9 +102,7 @@ export function AuthScreen({ signup = false }: { signup?: boolean }) {
       <SideArt />
       <SiteHeader />
       <main className="auth-form-wrap">
-        <span className="agent-mark">
-          <Heart size={17} />
-        </span>
+        
         <h1>{signup ? 'A space of your own.' : 'Welcome back.'}</h1>
         <p>
           {signup ? 'A small step toward a little more you.' : 'Your story can pick up right here.'}

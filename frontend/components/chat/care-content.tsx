@@ -64,7 +64,7 @@ export function TherapistCards() {
 
 export function MemorySection() {
   return (
-    <section className="memory-section section-wrap">
+    <section id = "approach" className="memory-section section-wrap scroll-mt-24">
       <div>
         <span className="section-eyebrow">A THREAD THAT STAYS WITH YOU</span>
         <h2>
@@ -77,8 +77,8 @@ export function MemorySection() {
           understanding of you, so your next session can pick up where you left off.
         </p>
         <Button asChild variant="link" className="px-0">
-          <Link href="/approach">
-            Explore our approach <ArrowUpRight />
+          <Link href="/chat">
+            Start with Hope <ArrowUpRight />
           </Link>
         </Button>
       </div>

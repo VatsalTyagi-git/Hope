@@ -3,6 +3,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html {
+  scroll-behavior:smooth;
+}
+
+#approach,
+#therapists {
+  scroll-margin-top:100px;
+}
+
 :root {
   --radius: 0.75rem;
   /* Hope: purple theme (landing + chat) */
