@@ -1,5 +1,8 @@
 # Hope — Autonomous AI Cognitive Behavioral Therapist
 
+<img width="949" height="452" alt="image" src="https://github.com/user-attachments/assets/beed334e-885a-42ba-93ee-d99e09bd645b" />
+
+
 > An autonomous, multimodal voice AI therapist powered by **LiveKit Agents**, **Google Gemini Live Native Audio**, and **FalkorDB Graph Memory** with strict multi-tenant clinical isolation.
 
 ---
