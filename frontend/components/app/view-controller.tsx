@@ -1,30 +1,8 @@
 'use client';
 
-import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useRef } from 'react';
 import { useSessionContext } from '@livekit/components-react';
 import { HopeVoiceSession } from '@/components/app/hope-voice-session';
-import { WelcomeView } from '@/components/app/welcome-view';
-
-const MotionWelcomeView = motion.create(WelcomeView);
-const MotionVoiceSession = motion.create(HopeVoiceSession);
-
-const VIEW_MOTION_PROPS = {
-  variants: {
-    visible: {
-      opacity: 1,
-    },
-    hidden: {
-      opacity: 0,
-    },
-  },
-  initial: 'hidden',
-  animate: 'visible',
-  exit: 'hidden',
-  transition: {
-    duration: 0.4,
-    ease: 'easeInOut',
-  },
-};
 
 interface ViewControllerProps {
   isVideoInputSupported?: boolean;
@@ -32,30 +10,24 @@ interface ViewControllerProps {
 }
 
 export function ViewController({ therapistTitle }: ViewControllerProps) {
-  const { isConnected, start } = useSessionContext();
+  const session = useSessionContext();
+  const { isConnected, start } = session;
+  const startedRef = useRef(false);
+
+  useEffect(() => {
+    if (!startedRef.current && !isConnected) {
+      startedRef.current = true;
+      start().catch((err) => {
+        console.error('[LiveKit Voice Auto-Connect Error]:', err);
+        startedRef.current = false;
+      });
+    }
+  }, [isConnected, start]);
 
   return (
-    <AnimatePresence mode="wait">
-      {/* Welcome view before connecting */}
-      {!isConnected && (
-        <MotionWelcomeView
-          key="welcome"
-          {...VIEW_MOTION_PROPS}
-          startButtonText="Start voice session"
-          onStartCall={start}
-          therapistTitle={therapistTitle}
-        />
-      )}
-
-      {/* Connected Voice Agent Session View */}
-      {isConnected && (
-        <MotionVoiceSession
-          key="voice-session"
-          {...VIEW_MOTION_PROPS}
-          therapistTitle={therapistTitle}
-          className="fixed inset-0"
-        />
-      )}
-    </AnimatePresence>
+    <HopeVoiceSession
+      therapistTitle={therapistTitle}
+      className="fixed inset-0"
+    />
   );
 }

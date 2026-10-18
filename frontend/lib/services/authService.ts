@@ -110,9 +110,29 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        localStorage.removeItem('hope_user_profile');
+        localStorage.removeItem('hope_new_user_first_session');
+        localStorage.removeItem('hope_voice_session_turns');
+        sessionStorage.clear();
+        document.cookie = 'cbt_patient_id=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      }
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+        });
+      } catch {}
+      try {
+        await signOut({ redirect: false });
+      } catch {}
+    } finally {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
-    await signOut({ callbackUrl: '/login' });
   },
 };

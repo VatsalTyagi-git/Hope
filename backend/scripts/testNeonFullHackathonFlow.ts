@@ -1,9 +1,8 @@
-import fetch from 'node-fetch';
 import prisma from '../db/index.js';
 
 const NEXT_URL = 'http://localhost:3000';
 
-async function main() {
+async function main(): Promise<void> {
   console.log('🚀 ========================================================');
   console.log('🧪 TESTING NEON DB PRODUCTION FLOW FOR MAIN HACKATHON PROJECT');
   console.log('========================================================\n');
@@ -30,7 +29,7 @@ async function main() {
     throw new Error(`Registration failed (${regRes.status}): ${errText}`);
   }
 
-  const regData = await regRes.json();
+  const regData = (await regRes.json()) as any;
   const userId = regData.user.id;
   console.log(`✅ Registered user in Neon DB! User ID: ${userId}`);
 
@@ -61,7 +60,7 @@ async function main() {
     throw new Error(`Login failed (${loginRes.status}): ${errText}`);
   }
 
-  const loginData = await loginRes.json();
+  const loginData = (await loginRes.json()) as any;
   console.log(`✅ Successfully logged in! Verified User ID: ${loginData.user.id}`);
 
   // 4. Test Chatbot Endpoint for this real user
@@ -86,7 +85,7 @@ async function main() {
     throw new Error(`Chat API failed (${chatRes.status}): ${errText}`);
   }
 
-  const chatData = await chatRes.json();
+  const chatData = (await chatRes.json()) as any;
   console.log(`✅ Hope companion response generated:`);
   console.log(`"${chatData.message?.content}"\n`);
   const assistantReply = chatData.message?.content || '';
@@ -116,7 +115,7 @@ async function main() {
     throw new Error(`Transcript save failed (${saveRes.status}): ${errText}`);
   }
 
-  const saveData = await saveRes.json();
+  const saveData = (await saveRes.json()) as any;
   const sessionId = saveData.sessionId;
   console.log(`✅ Transcript processed and saved!`);
   console.log(`   Session ID: ${sessionId}`);
@@ -141,8 +140,8 @@ async function main() {
   // 7. Verify Dashboard API GET /api/sessions for this user
   console.log('\n7️⃣ Verifying Dashboard GET /api/sessions API returns the new session for this user...');
   const dashRes = await fetch(`${NEXT_URL}/api/sessions?userId=${encodeURIComponent(userId)}`);
-  const dashData = await dashRes.json();
-  const sessionFound = dashData.sessions?.some((s) => s.id === sessionId);
+  const dashData = (await dashRes.json()) as any;
+  const sessionFound = dashData.sessions?.some((s: any) => s.id === sessionId);
 
   console.log(`✅ User session count in dashboard API: ${dashData.sessions?.length}`);
   console.log(`   Session returned to dashboard: ${sessionFound ? 'YES ✅' : 'NO ❌'}`);
@@ -151,7 +150,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((err) => {
-  console.error('\n❌ Test failed with error:', err);
+main().catch((err: unknown) => {
+  console.error('\n❌ FAILED:', err);
   process.exit(1);
 });

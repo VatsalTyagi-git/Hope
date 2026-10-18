@@ -1583,6 +1583,21 @@ h2 em {
   text-decoration: none;
   color: var(--foreground);
   height: 100%;
+  gap: 8px;
+}
+
+.chatgpt-thread-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--muted-foreground);
+}
+
+.chatgpt-thread-icon.is-voice {
+  color: var(--primary);
 }
 
 .chatgpt-thread-title {
@@ -1592,7 +1607,21 @@ h2 em {
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+}
+
+.voice-badge-pill {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: color-mix(in oklch, var(--primary) 12%, transparent);
+  color: var(--primary);
+  border: 1px solid color-mix(in oklch, var(--primary) 22%, transparent);
+  flex-shrink: 0;
 }
 
 .chatgpt-delete-btn {
@@ -1660,6 +1689,35 @@ h2 em {
 .demo-account > div {
   min-width: 0;
   overflow: hidden;
+  flex: 1;
+}
+
+.demo-account strong {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chatgpt-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  margin-left: auto;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.chatgpt-logout-btn:hover {
+  background: var(--muted);
+  color: var(--destructive, #ef4444);
 }
 
 .demo-account small {
@@ -1836,6 +1894,22 @@ h2 em {
 
 .message-copy svg {
   width: 12px;
+}
+
+.streaming-cursor {
+  display: inline-block;
+  width: 7px;
+  height: 14px;
+  background-color: var(--care-blue, #6366f1);
+  margin-left: 3px;
+  vertical-align: -1px;
+  border-radius: 1px;
+  animation: streamingBlink 0.5s infinite ease-in-out;
+}
+
+@keyframes streamingBlink {
+  0%, 100% { opacity: 1; transform: scaleY(1); }
+  50% { opacity: 0.15; transform: scaleY(0.85); }
 }
 
 .voice-dialog-icon {
@@ -2587,3 +2661,120 @@ html.dark body {
     right: -38vw;
   }
 }
+
+/* Top Right User Hamburger Dropdown Menu */
+.user-menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.user-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 250px;
+  background: var(--card, #12151e);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 18px;
+  padding: 8px;
+  box-shadow: 0 16px 40px -8px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: userMenuPop 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes userMenuPop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.user-menu-header {
+  padding: 10px 12px 12px;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  margin-bottom: 4px;
+}
+
+.user-menu-header-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-menu-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.user-menu-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--foreground, #ffffff);
+  line-height: 1.2;
+}
+
+.user-menu-user-email {
+  font-size: 11px;
+  color: var(--muted-foreground, #94a3b8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
+  margin-top: 2px;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--foreground, #e2e8f0);
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.user-menu-item:hover {
+  background: var(--accent, rgba(255, 255, 255, 0.07));
+  color: var(--accent-foreground, #ffffff);
+}
+
+.user-menu-item.logout {
+  color: #f87171;
+}
+
+.user-menu-item.logout:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+}
+
+.user-menu-divider {
+  height: 1px;
+  background: var(--border, rgba(255, 255, 255, 0.08));
+  margin: 4px 0;
+}
+

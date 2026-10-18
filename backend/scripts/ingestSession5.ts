@@ -1,6 +1,4 @@
-import fetch from 'node-fetch';
-
-async function ingestSession5() {
+async function ingestSession5(): Promise<void> {
   const payload = {
     roomName: 'hope_0ccbaecf-43fd-4b7f-91e0-d32233482b07_weekly_recall',
     userId: '0ccbaecf-43fd-4b7f-91e0-d32233482b07',
@@ -33,11 +31,11 @@ async function ingestSession5() {
     body: JSON.stringify(payload),
   });
 
-  const data = await res.json();
+  const data = (await res.json()) as { success: boolean; sessionId?: string };
   console.log('Session 5 Ingestion Result:', data.success, data.sessionId);
 }
 
-ingestSession5().catch((err) => {
+ingestSession5().catch((err: unknown) => {
   console.error('Error:', err);
   process.exit(1);
 });

@@ -7,9 +7,9 @@
     "start": "tsx server.ts",
     "dev": "tsx watch server.ts",
     "build": "tsc",
-    "clear-graph": "node scripts/clearFalkorDB.js",
-    "simulate-10": "node scripts/simulate10SessionsBothUsers.js",
-    "test-isolation": "node scripts/testUserIsolation.js",
+    "clear-graph": "tsx scripts/clearFalkorDB.ts",
+    "simulate-10": "tsx scripts/simulate10SessionsBothUsers.ts",
+    "test-isolation": "tsx scripts/testUserIsolation.ts",
     "db:generate": "prisma generate --config db/prisma7.config.ts",
     "db:push": "prisma db push --config db/prisma7.config.ts",
     "db:studio": "prisma studio --config db/prisma7.config.ts"

@@ -2,11 +2,14 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
 
 export interface HopeUser {
   id: string;
   email: string;
   name: string;
+  image?: string;
+  fullName?: string;
   user_metadata?: {
     fullName?: string;
     full_name?: string;
@@ -44,18 +47,9 @@ function setPatientCookie(userId: string) {
 function clearPatientCookie() {
   if (typeof document !== 'undefined') {
     document.cookie = `${COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax`;
+    document.cookie = `${COOKIE_NAME}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
   }
 }
-
-export const DEFAULT_TESTED_USER: HopeUser = {
-  id: '0ccbaecf-43fd-4b7f-91e0-d32233482b07',
-  email: 'elena.rostova.1792184365157@hope-wellbeing.org',
-  name: 'Elena Rostova',
-  user_metadata: {
-    fullName: 'Elena Rostova',
-    full_name: 'Elena Rostova',
-  },
-};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<HopeUser | null>(null);
@@ -68,31 +62,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const stored = localStorage.getItem(USER_STORAGE_KEY);
         if (stored) {
           const parsed = JSON.parse(stored);
-          setUser(parsed);
-          setPatientCookie(parsed.id || parsed.email);
-        } else {
-          // Default to the tested patient (Elena Rostova)
-          const cookieMatch = document.cookie.match(new RegExp(`(^| )${COOKIE_NAME}=([^;]+)`));
-          if (cookieMatch) {
-            const id = decodeURIComponent(cookieMatch[2]);
+          if (parsed && (parsed.id || parsed.email)) {
+            setUser(parsed);
+            setPatientCookie(parsed.id || parsed.email);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Check if NextAuth has an active session (e.g. from Google or Credentials)
+        try {
+          const sessionRes = await fetch('/api/auth/session');
+          if (sessionRes.ok) {
+            const sessionData = await sessionRes.json();
+            if (sessionData?.user) {
+              const authedUser: HopeUser = {
+                id: sessionData.user.id || crypto.randomUUID(),
+                email: sessionData.user.email,
+                name: sessionData.user.name || sessionData.user.email?.split('@')[0],
+                image: sessionData.user.image,
+              };
+              setUser(authedUser);
+              localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(authedUser));
+              setPatientCookie(authedUser.id);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch {}
+
+        const cookieMatch = document.cookie.match(new RegExp(`(^| )${COOKIE_NAME}=([^;]+)`));
+        if (cookieMatch) {
+          const id = decodeURIComponent(cookieMatch[2]);
+          if (id && id.trim() !== '') {
             const restoredUser: HopeUser = {
               id,
               email: id.includes('@') ? id : `${id}@hope-wellbeing.org`,
-              name: id === DEFAULT_TESTED_USER.id ? DEFAULT_TESTED_USER.name : id.split('@')[0],
-              user_metadata: { fullName: id === DEFAULT_TESTED_USER.id ? DEFAULT_TESTED_USER.name : id.split('@')[0] },
+              name: id.split('@')[0],
             };
             setUser(restoredUser);
             localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(restoredUser));
-          } else {
-            setUser(DEFAULT_TESTED_USER);
-            setPatientCookie(DEFAULT_TESTED_USER.id);
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(DEFAULT_TESTED_USER));
+            setLoading(false);
+            return;
           }
         }
+
+        // No logged-in user
+        setUser(null);
       }
     } catch (e) {
       console.warn('[AuthContext] Session load note:', e);
-      setUser(DEFAULT_TESTED_USER);
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -197,20 +217,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(USER_STORAGE_KEY);
-      clearPatientCookie();
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(USER_STORAGE_KEY);
+        localStorage.removeItem('hope_new_user_first_session');
+        localStorage.removeItem('hope_voice_session_turns');
+        sessionStorage.clear();
+        clearPatientCookie();
+      }
+      setUser(null);
+
+      // Call server-side logout route to clear all HttpOnly session cookies
+      try {
+        await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+        });
+      } catch (err) {
+        console.warn('[AuthContext] server-side logout fetch note:', err);
+      }
+
+      // Also invoke NextAuth client signOut
+      try {
+        await nextAuthSignOut({ redirect: false });
+      } catch (err) {
+        console.warn('[AuthContext] nextAuthSignOut note:', err);
+      }
+    } finally {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
-    setUser(null);
-    router.push('/login');
   };
 
   const resetPassword = async (_email: string) => {
     return { error: null };
   };
 
-  const signInWithGoogle = async (_redirectTo?: string) => {
-    return signIn('google.user@example.com');
+  const signInWithGoogle = async (redirectTo?: string) => {
+    try {
+      await nextAuthSignIn('google', { callbackUrl: redirectTo || '/dashboard' });
+      return { error: null };
+    } catch (err: any) {
+      return { error: err instanceof Error ? err : new Error(String(err)) };
+    }
   };
 
   return (

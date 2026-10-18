@@ -1,6 +1,6 @@
 import falkor from '../db/falkor.js';
 
-async function main() {
+async function main(): Promise<void> {
   console.log('🧹 [FalkorDB Clear] Connecting to FalkorDB...');
   try {
     const res = await falkor.clearAll();
@@ -9,8 +9,8 @@ async function main() {
     await falkor.initIndices();
     console.log('✅ [FalkorDB Clear] Indices successfully reinitialized!');
     process.exit(0);
-  } catch (err) {
-    console.error('❌ [FalkorDB Clear Error]:', err.message);
+  } catch (err: any) {
+    console.error('❌ [FalkorDB Clear Error]:', err?.message || err);
     process.exit(1);
   }
 }

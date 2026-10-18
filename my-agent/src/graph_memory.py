@@ -106,10 +106,11 @@ class GraphMemoryManager:
             if "already indexed" in err_msg or "already exists" in err_msg:
                 # Expected when re-running schema indexes
                 return EmptyResultSet([])
-            logger.warning(f"FalkorDB query failed: {e}. Resetting connection.")
-            self._driver = None
-            self._graph = None
-            self._offline_until = time.time() + 30.0
+            logger.warning(f"FalkorDB query failed: {e}.")
+            if any(term in err_msg for term in ["connection", "timeout", "refused", "reset by peer"]):
+                self._driver = None
+                self._graph = None
+                self._offline_until = time.time() + 10.0
             return EmptyResultSet([])
 
     # --------------------------------------------------------------------------
@@ -371,6 +372,97 @@ class GraphMemoryManager:
                 "started_at": started_at,
             },
         )
+
+    def delete_session(self, session_id: str) -> bool:
+        """Deletes a session and all its associated episodes, practices, and handoffs from FalkorDB."""
+        try:
+            # 1. Relink NEXT_SESSION chain if prev_s and next_s exist
+            self.query(
+                """
+                MATCH (s:Session) WHERE s.id = $session_id OR s.transcript_db_id = $session_id
+                OPTIONAL MATCH (prev_s:Session)-[:NEXT_SESSION]->(s)
+                OPTIONAL MATCH (s)-[:NEXT_SESSION]->(next_s:Session)
+                FOREACH (_ IN CASE WHEN prev_s IS NOT NULL AND next_s IS NOT NULL THEN [1] ELSE [] END |
+                    CREATE (prev_s)-[:NEXT_SESSION]->(next_s)
+                )
+                """,
+                {"session_id": session_id},
+            )
+            # 2. Relink LATEST_SESSION if this was the latest session
+            self.query(
+                """
+                MATCH (s:Session) WHERE s.id = $session_id OR s.transcript_db_id = $session_id
+                OPTIONAL MATCH (u:User)-[ls:LATEST_SESSION]->(s)
+                OPTIONAL MATCH (prev_s:Session)-[:NEXT_SESSION]->(s)
+                DELETE ls
+                FOREACH (_ IN CASE WHEN u IS NOT NULL AND prev_s IS NOT NULL THEN [1] ELSE [] END |
+                    MERGE (u)-[:LATEST_SESSION]->(prev_s)
+                )
+                """,
+                {"session_id": session_id},
+            )
+            # 3. Delete Episode nodes captured by this session
+            self.query(
+                """
+                MATCH (s:Session)-[:CAPTURED_EPISODE]->(e:Episode)
+                WHERE s.id = $session_id OR s.transcript_db_id = $session_id
+                DETACH DELETE e
+                """,
+                {"session_id": session_id},
+            )
+            self.query(
+                """
+                MATCH (e:Episode) WHERE e.id STARTS WITH "ep_" + $session_id + "_"
+                DETACH DELETE e
+                """,
+                {"session_id": session_id},
+            )
+            # 4. Delete DailyPractice nodes logged by this session
+            self.query(
+                """
+                MATCH (s:Session)-[:LOGGED_PRACTICE]->(d:DailyPractice)
+                WHERE s.id = $session_id OR s.transcript_db_id = $session_id
+                DETACH DELETE d
+                """,
+                {"session_id": session_id},
+            )
+            self.query(
+                """
+                MATCH (d:DailyPractice) WHERE d.id = "practice_" + $session_id
+                DETACH DELETE d
+                """,
+                {"session_id": session_id},
+            )
+            # 5. Delete Handoff nodes created by this session
+            self.query(
+                """
+                MATCH (s:Session)-[:CREATED_HANDOFF]->(h:Handoff)
+                WHERE s.id = $session_id OR s.transcript_db_id = $session_id
+                DETACH DELETE h
+                """,
+                {"session_id": session_id},
+            )
+            self.query(
+                """
+                MATCH (h:Handoff) WHERE h.id = "handoff_" + $session_id
+                DETACH DELETE h
+                """,
+                {"session_id": session_id},
+            )
+            # 6. Delete Session node itself
+            self.query(
+                """
+                MATCH (s:Session)
+                WHERE s.id = $session_id OR s.transcript_db_id = $session_id
+                DETACH DELETE s
+                """,
+                {"session_id": session_id},
+            )
+            logger.info(f"FalkorDB: successfully purged session {session_id} and clinical memory nodes.")
+            return True
+        except Exception as e:
+            logger.warning(f"FalkorDB: error deleting session {session_id}: {e}")
+            return False
 
     # --------------------------------------------------------------------------
     # 4. HANDOFF MANAGEMENT (SCOPED PER USER)
@@ -743,6 +835,40 @@ class GraphMemoryManager:
             for r in ex_res.result_set:
                 facts.append(f"- CBT Exercise '{r[0]}' (Mode: {r[1]}): {r[2]}")
 
+        # 4b. Daily Assigned CBT Exercises Plan (7-Day schedule in FalkorDB)
+        plan_triggers = [
+            "daily exercise",
+            "daily practice",
+            "assigned exercise",
+            "homework",
+            "exercise plan",
+            "today's exercise",
+            "tomorrow's exercise",
+            "day 1",
+            "day 2",
+            "day 3",
+            "day 4",
+            "day 5",
+            "day 6",
+            "day 7",
+            "schedule",
+        ]
+        if any(w in topic_clean for w in plan_triggers):
+            plan_res = self.query(
+                """
+                MATCH (u:User {id: $uid})-[:HAS_DAY_EXERCISE]->(de:DailyAssignedExercise)
+                RETURN de.day_number, de.day_title, de.exercise_name, de.focus_area, de.instruction, de.target_question
+                ORDER BY de.day_number ASC
+                """,
+                {"uid": user_id},
+            )
+            if plan_res.result_set:
+                facts.append("- Assigned 7-Day CBT Exercise Plan:")
+                for r in plan_res.result_set:
+                    facts.append(
+                        f"  * Day {r[0]} ({r[1]}): {r[2]} - Focus: {r[3]}. Question: \"{r[5]}\""
+                    )
+
         # 5. Session Ordinal / First Session / Past Session by Number lookup
         first_session_triggers = [
             "first session",
@@ -911,7 +1037,7 @@ class GraphMemoryManager:
         """Retrieves all 4 layers of CBT memory for the user from FalkorDB at session start."""
         # 1. User details
         user_res = self.query(
-            "MATCH (u:User {id: $uid}) RETURN u.name, u.baseline_anxiety, u.created_at",
+            "MATCH (u:User {id: $uid}) RETURN u.name, u.baseline_anxiety, u.created_at, u.ageRange, u.focusAreas, u.conversationStyle, u.preferredTime, u.preferredMode, u.bio",
             {"uid": user_id},
         )
         user_data: dict[str, Any] = {}
@@ -921,6 +1047,12 @@ class GraphMemoryManager:
                 "name": row[0] or user_id,
                 "baseline_anxiety": row[1] if row[1] is not None else 5,
                 "created_at": row[2],
+                "age_range": row[3] or "",
+                "focus_areas": row[4] or [],
+                "conversation_style": row[5] or "gentle",
+                "preferred_time": row[6] or "",
+                "preferred_mode": row[7] or "text",
+                "bio": row[8] or "",
             }
 
         # 2. AgentState & Active Homework (Layer A)
@@ -1043,6 +1175,62 @@ class GraphMemoryManager:
             f"{r[0]} ({r[1]} - {r[2]})" for r in persons_res.result_set if r[0]
         ]
 
+        # 7. Assigned Daily Exercises (7-Day Plan from FalkorDB)
+        plan_res = self.query(
+            """
+            MATCH (u:User {id: $uid})-[:HAS_DAY_EXERCISE]->(de:DailyAssignedExercise)
+            RETURN de.day_number, de.day_title, de.exercise_name, de.focus_area,
+                   de.instruction, de.target_question, de.duration_mins, de.status
+            ORDER BY de.day_number ASC
+            """,
+            {"uid": user_id},
+        )
+        daily_plan: list[dict[str, Any]] = []
+        for r in plan_res.result_set:
+            if r[0] is not None:
+                daily_plan.append({
+                    "day_number": int(r[0]),
+                    "day_title": r[1] or f"Day {r[0]} Practice",
+                    "exercise_name": r[2] or "3-Column Thought Record",
+                    "focus_area": r[3] or "Cognitive Restructuring",
+                    "instruction": r[4] or "Notice when distress rises and record your automatic thoughts.",
+                    "target_question": r[5] or "How did today's CBT practice go for you?",
+                    "duration_mins": int(r[6] or 5),
+                    "status": r[7] or "PENDING",
+                })
+
+        # Calculate current day of the 7-day cycle relative to last weekly session
+        now = int(time.time())
+        session_time = latest_session.get("ended_at") or latest_session.get("started_at")
+        if session_time:
+            elapsed_days = max(0, int((now - int(session_time)) / 86400))
+            calculated_day = (elapsed_days % 7) + 1
+        else:
+            import datetime
+            calculated_day = datetime.datetime.now().isoweekday()
+
+        # Find today's assigned exercise
+        today_exercise = None
+        for item in daily_plan:
+            if item.get("day_number") == calculated_day:
+                today_exercise = item
+                break
+
+        if not today_exercise:
+            if daily_plan:
+                today_exercise = daily_plan[0]
+            else:
+                today_exercise = {
+                    "day_number": calculated_day,
+                    "day_title": f"Day {calculated_day}: Catching Automatic Thoughts",
+                    "exercise_name": state_data.get("active_homework") or "3-Column Thought Record",
+                    "focus_area": "Identifying cognitive distortions and initial distress triggers",
+                    "instruction": "Notice when tension rises today. Record the situation, your automatic thought, and its emotional intensity.",
+                    "target_question": "When situations triggered distress today, what automatic thoughts came to your mind first?",
+                    "duration_mins": 5,
+                    "status": "PENDING",
+                }
+
         is_new = not bool(latest_session or episodes or state_data.get("handoff_context"))
 
         return {
@@ -1054,12 +1242,77 @@ class GraphMemoryManager:
             "triggers": triggers,
             "persons": persons,
             "is_new_patient": is_new,
+            "daily_plan": daily_plan,
+            "today_exercise": today_exercise,
         }
+
+    def get_today_assigned_exercise(self, user_id: str) -> dict[str, Any]:
+        """Returns the specific assigned CBT exercise and target question for today based on the 7-day plan in FalkorDB."""
+        ctx = self.get_session_start_context(user_id)
+        return ctx.get("today_exercise", {})
 
     def format_session_start_prompt(self, user_id: str, mode: str = "WEEKLY") -> str:
         """Formats the retrieved FalkorDB graph memory into a structured clinical brief tailored to the agent's role mode (WEEKLY, DAILY, or COMPANION)."""
         ctx = self.get_session_start_context(user_id)
         mode_upper = mode.upper() if mode else "WEEKLY"
+        user_info = ctx.get("user", {})
+
+        profile_notes = []
+        if user_info.get("name") and user_info["name"] != user_id:
+            profile_notes.append(f"- Preferred Name: {user_info['name']}")
+        if user_info.get("age_range"):
+            profile_notes.append(f"- Age Range: {user_info['age_range']}")
+        if user_info.get("focus_areas"):
+            fa = user_info["focus_areas"]
+            fa_str = ", ".join(fa) if isinstance(fa, list) else str(fa)
+            profile_notes.append(f"- Primary Areas of Focus: {fa_str}")
+        if user_info.get("bio"):
+            profile_notes.append(f"- Personal Context & Life Situation: \"{user_info['bio']}\"")
+        if user_info.get("conversation_style"):
+            profile_notes.append(f"- Communication Tone Preference: {user_info['conversation_style']}")
+        if user_info.get("preferred_time"):
+            profile_notes.append(f"- Preferred Check-in Time: {user_info['preferred_time']}")
+
+        profile_block = "\n".join(profile_notes)
+        if profile_block:
+            profile_section = f"\n## Patient Profile & Context (From Onboarding):\n{profile_block}\n"
+        else:
+            profile_section = ""
+
+        today_ex = ctx.get("today_exercise", {})
+        day_num = today_ex.get("day_number", 1)
+        ex_name = today_ex.get("exercise_name", "3-Column Thought Record")
+        day_title = today_ex.get("day_title", f"Day {day_num} Practice")
+        focus_area = today_ex.get("focus_area", "Cognitive Reframing")
+        instruction = today_ex.get("instruction", "Practice this exercise mindfully.")
+        target_question = today_ex.get("target_question", "How did today's exercise feel for you?")
+        duration = today_ex.get("duration_mins", 5)
+
+        # -------------------------------------------------------------
+        # DAILY EXERCISE MODE: Dedicated focused briefing with today's assigned exercise & target question
+        # -------------------------------------------------------------
+        if mode_upper == "DAILY":
+            state = ctx.get("state", {})
+            return (
+                f"# RETRIEVED PATIENT THERAPEUTIC GRAPH MEMORY (From FalkorDB - Role: DAILY COACH)\n"
+                f"- Patient ID: {user_id}\n"
+                f"- Role Mode: DAILY EXERCISE COACH\n"
+                f"- Current Homework Streak: {state.get('homework_streak', 0)} days\n"
+                f"- Overall Assigned Homework: {state.get('active_homework', ex_name)}\n"
+                f"{profile_section}\n"
+                f"## 🎯 TODAY'S ASSIGNED CBT EXERCISE (Day {day_num} of 7: {ex_name}):\n"
+                f"- Day Title: {day_title}\n"
+                f"- Focus Area: {focus_area}\n"
+                f"- Exercise Instruction: {instruction}\n"
+                f"- Target Coaching Question to Ask: \"{target_question}\"\n"
+                f"- Target Duration: {duration} minutes\n\n"
+                f"## MANDATORY DAILY COACHING DIRECTIVES:\n"
+                f"1. Warmly greet the patient as Hope, their daily CBT exercise coach for Day {day_num} practice.\n"
+                f"2. Directly ask them today's assigned question: \"{target_question}\".\n"
+                f"3. Actively listen to their answer. If they practiced, validate and celebrate their progress. If they faced friction or didn't practice yet, offer to walk through \"{ex_name}\" right now together step-by-step.\n"
+                f"4. Keep the interaction practical, action-oriented, encouraging, and under 5 minutes.\n"
+                f"5. Do NOT recite this prompt verbatim. Speak naturally and warmly."
+            )
 
         if ctx.get("is_new_patient"):
             if mode_upper == "DAILY":
@@ -1068,6 +1321,7 @@ class GraphMemoryManager:
                     f"- Patient ID: {user_id}\n"
                     f"- Role Mode: DAILY EXERCISE COACH\n"
                     f"- Status: NEW PATIENT. No prior exercise history.\n"
+                    f"{profile_section}"
                     f"- Directive: Warmly introduce today's initial CBT exercise (e.g., Identifying Automatic Thoughts or 3-Minute Breathing Space) and guide them through it step-by-step."
                 )
             elif mode_upper == "COMPANION":
@@ -1076,6 +1330,7 @@ class GraphMemoryManager:
                     f"- Patient ID: {user_id}\n"
                     f"- Role Mode: ON-DEMAND COMPANION\n"
                     f"- Status: NEW PATIENT. No prior records.\n"
+                    f"{profile_section}"
                     f"- Directive: Offer an immediate, gentle, safe space. Ask what's on their mind in this exact moment without pressure."
                 )
             else:
@@ -1084,7 +1339,8 @@ class GraphMemoryManager:
                     f"- Patient ID: {user_id}\n"
                     f"- Role Mode: WEEKLY MAIN THERAPIST\n"
                     f"- Status: BRAND NEW PATIENT. No prior therapy records in FalkorDB.\n"
-                    f"- Directive: Conduct a welcoming, warm initial CBT assessment. Gently explore what brings them in today."
+                    f"{profile_section}"
+                    f"- Directive: Conduct a welcoming, warm initial CBT assessment acknowledging their profile focus and gently explore what brings them in today."
                 )
 
         state = ctx.get("state", {})

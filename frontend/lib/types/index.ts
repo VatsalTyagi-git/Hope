@@ -13,6 +13,7 @@ export interface UserProfile extends User {
   conversationStyle: 'gentle' | 'direct';
   preferredTime: string; // e.g. 'Evening (7:00 PM)'
   preferredMode: 'text' | 'voice';
+  bio?: string;
   onboardingComplete: boolean;
 }
 

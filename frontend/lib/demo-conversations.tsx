@@ -13,6 +13,8 @@ export type Thread = {
   themes: string[];
   takeaway: string;
   ended?: boolean;
+  isVoice?: boolean;
+  sessionType?: 'voice' | 'chat';
 };
 
 export const textMessage = (id: string, role: 'user' | 'assistant', text: string): UIMessage => ({
@@ -28,6 +30,8 @@ export const demoThreads: Thread[] = [
     title: 'Imposter Panic & Reframe Recall',
     date: 'Today',
     agent: 'Weekly main therapist',
+    isVoice: true,
+    sessionType: 'voice',
     messages: [
       textMessage(
         '8a1b2ff1-c876-474d-bf9a-5ba3f9d89b54',
@@ -51,7 +55,7 @@ export const demoThreads: Thread[] = [
       ),
     ],
     summary:
-      'The patient reached out during an acute episode of imposter anxiety triggered by an upcoming presentation. The assistant successfully utilized historical context from graph memory to help the patient recall Marcus and Project Aurora, identify catastrophizing, and re-apply their validated cognitive reframe.',
+      'An exploration of imposter anxiety triggered by an upcoming presentation, identifying catastrophizing and re-applying a validated cognitive reframe with Marcus and Project Aurora.',
     themes: ['Catastrophizing', 'Imposter Panic', 'Memory Recall'],
     takeaway:
       'Constructive critique on distributed failover architecture is a normal part of engineering review, not proof that I am incompetent or getting fired. I solved three critical bugs last sprint and cut query latency by 40%.',
@@ -62,6 +66,8 @@ export const demoThreads: Thread[] = [
     title: 'Midday Grounding for Stakeholder Demo',
     date: 'Today',
     agent: 'On-demand therapist',
+    isVoice: false,
+    sessionType: 'chat',
     messages: [
       textMessage(
         'be86eedb-da6e-4229-8bcf-2d4989ed2ad3',
@@ -95,6 +101,8 @@ export const demoThreads: Thread[] = [
     title: 'Work-Life Boundaries with Julian',
     date: 'Yesterday',
     agent: 'Weekly main therapist',
+    isVoice: true,
+    sessionType: 'voice',
     messages: [
       textMessage(
         '9bc5b755-f946-4746-89a1-2c91e4543136',
@@ -134,6 +142,8 @@ export const demoThreads: Thread[] = [
     title: 'Morning Physiological Sigh & Standup with Clara',
     date: 'Yesterday',
     agent: 'Daily exercise therapist',
+    isVoice: true,
+    sessionType: 'voice',
     messages: [
       textMessage(
         '62454e8d-4136-4e8b-a86f-eb80ec3e8ccc',
@@ -162,6 +172,8 @@ export const demoThreads: Thread[] = [
     title: 'Project Aurora Presentation & Marcus Critique',
     date: 'Yesterday',
     agent: 'Weekly main therapist',
+    isVoice: true,
+    sessionType: 'voice',
     messages: [
       textMessage(
         '6fda5e68-1763-4fca-9e1b-00aa15590775',
@@ -220,7 +232,7 @@ type Store = {
   ready: boolean;
   error: string;
   save: (thread: Thread) => void;
-  remove: (id: string) => void;
+  remove: (id: string) => Promise<void>;
   reloadFromBackend: () => Promise<void>;
   fetchThreadById: (id: string) => Promise<Thread | null>;
 };
@@ -241,33 +253,156 @@ function formatDate(isoOrTs?: any): string {
   }
 }
 
+export function deriveObjectiveTitle(s: any): string {
+  const room = String(s.roomName || '').toLowerCase();
+  const ext = s.rawTranscript?.extractedData || s.extractedData || {};
+  const ep = ext.episodes?.[0] || {};
+  const mode = (ext.mode || (room.includes('daily') ? 'DAILY' : room.includes('ondemand') || room.includes('companion') ? 'ON_DEMAND' : 'WEEKLY')).toUpperCase();
+
+  // 1. Room-based preset overrides
+  if (room.includes('recall')) return 'Imposter Panic & Reframe Recall';
+  if (room.includes('boundaries')) return 'Work-Life Boundaries with Julian';
+  if (room.includes('daily_drill')) return 'Morning Physiological Sigh & Standup with Clara';
+  if (room.includes('ondemand_calm')) return 'Midday Grounding for Stakeholder Demo';
+  if (room.includes('weekly_intake') || room.includes('initial')) return 'Project Aurora Presentation & Marcus Critique';
+
+  const isGreeting = (str: string) =>
+    /^(hi|hello|hey|hey there|good morning|good afternoon|good evening|sup|yo|greetings|howdy|test)[.!?]?$/i.test(str.trim());
+
+  // 2. If object already has an existing valid title that isn't a greeting or boilerplate
+  if (s.title && typeof s.title === 'string') {
+    const rawT = s.title.trim();
+    if (
+      rawT.length > 3 &&
+      !isGreeting(rawT) &&
+      !/^brief\s+check-in/i.test(rawT) &&
+      !/^the\s+(patient|client|session)/i.test(rawT) &&
+      !/^initiated\s+contact/i.test(rawT) &&
+      rawT !== 'CBT Session' &&
+      rawT !== 'New conversation' &&
+      rawT !== 'Mindful Reflection'
+    ) {
+      return rawT.length > 40 ? rawT.slice(0, 38) + '…' : rawT;
+    }
+  }
+
+  // 3. Extracted title from Gemini CBT extractor
+  if (ext.title && typeof ext.title === 'string') {
+    const trimmed = ext.title.trim();
+    if (
+      trimmed.length > 3 &&
+      !isGreeting(trimmed) &&
+      !/patient|client|session|brief|check-in|initiated/i.test(trimmed)
+    ) {
+      return trimmed.length > 40 ? trimmed.slice(0, 38) + '…' : trimmed;
+    }
+  }
+
+  // 4. Check message turns for substantive user topics FIRST (Real user objective)
+  const rawMessages = Array.isArray(s.messages) && s.messages.length > 0
+    ? s.messages
+    : (Array.isArray(s.rawTranscript?.turns) ? s.rawTranscript.turns : []);
+
+  const substantiveUserTurn = rawMessages.find((m: any) => {
+    const role = (m.role || '').toLowerCase();
+    const content = (m.content || (m.parts ? m.parts[0]?.text : '') || m.text || '').trim();
+    return role === 'user' && content.length > 0 && !isGreeting(content);
+  });
+
+  const userObjective = substantiveUserTurn
+    ? (substantiveUserTurn.content || (substantiveUserTurn.parts ? substantiveUserTurn.parts[0]?.text : '') || substantiveUserTurn.text || '').trim()
+    : '';
+
+  if (userObjective) {
+    let cleanUser = userObjective
+      .replace(/^(hi|hello|hey|hey there|good morning)[,\s]+(hope|therapist|there)?[,\s]*/i, '')
+      .replace(/^(i'm feeling|i feel like|i am feeling|can we talk about|i want to talk about|i need help with|can you help me|help me with|help me|feeling)\s+/i, '')
+      .trim();
+    cleanUser = cleanUser.charAt(0).toUpperCase() + cleanUser.slice(1);
+    cleanUser = cleanUser.replace(/[?.!]+$/, '');
+    if (cleanUser.length > 3) {
+      return cleanUser.length > 38 ? cleanUser.slice(0, 35) + '…' : cleanUser;
+    }
+  }
+
+  // 5. Episode trigger if present (punchy 2-4 word objective)
+  if (ep.trigger?.name && typeof ep.trigger.name === 'string') {
+    const trig = ep.trigger.name.trim();
+    if (trig.length > 2 && !/patient|session|check-in|initiated/i.test(trig)) {
+      const formatted = trig.charAt(0).toUpperCase() + trig.slice(1);
+      return formatted.length > 40 ? formatted.slice(0, 38) + '…' : formatted;
+    }
+  }
+
+  // 6. Clean summary if present, filtering out clinical boilerplate
+  const summary = (s.summary || ext.summary || '').trim();
+  if (
+    summary &&
+    !/no recorded speech turns/i.test(summary) &&
+    !/^the\s+(patient|client)\s+initiated\s+contact/i.test(summary) &&
+    !/^the\s+patient\s+has\s+not\s+yet\s+provided/i.test(summary) &&
+    !/has\s+initiated/i.test(summary) &&
+    !/^the\s+session\s+initiated\s+with/i.test(summary) &&
+    !/^brief\s+session/i.test(summary)
+  ) {
+    let cleaned = summary
+      .replace(/^the\s+(patient|client)\s+(sought\s+support\s+to|explored|discussed|presented\s+with|reached\s+out\s+to|is\s+experiencing|struggles\s+with|navigated|reflected\s+on)\s+/i, '')
+      .replace(/^the\s+(patient|client)\s+/i, '')
+      .replace(/^brief\s+check-in\s+with\s+on-demand\s+companion[.:]?\s*/i, '')
+      .replace(/^brief\s+check-in[.:]?\s*/i, '')
+      .replace(/^a\s+therapeutic\s+reflection\s+focused\s+on\s+/i, '')
+      .replace(/^a\s+supportive\s+grounding\s+reflection\s+on\s+/i, '')
+      .trim();
+
+    cleaned = cleaned.replace(/\.$/, '');
+
+    if (
+      cleaned.length > 3 &&
+      !/^(brief|patient|hi|hello|initiated|has\s+initiated|the\s+session)/i.test(cleaned)
+    ) {
+      const words = cleaned.split(/\s+/);
+      let shortPhrase = words.slice(0, 6).join(' ');
+      shortPhrase = shortPhrase.charAt(0).toUpperCase() + shortPhrase.slice(1);
+      if (words.length > 6 || cleaned.length > shortPhrase.length + 3) {
+        shortPhrase += '…';
+      }
+      return shortPhrase.length > 40 ? shortPhrase.slice(0, 38) + '…' : shortPhrase;
+    }
+  }
+
+  // 7. Episode distortion fallback
+  if (ep.distortion) {
+    return `Reframing ${ep.distortion}`;
+  }
+
+  // 8. Clean, mode-aware objective title fallback (Never contains "brief" or "patient")
+  if (mode === 'WEEKLY') {
+    return 'Weekly Therapy Check-in';
+  } else if (mode === 'DAILY') {
+    return 'Daily CBT Practice';
+  }
+  return 'Mindful Centering & Grounding';
+}
+
 export function formatSessionToThread(s: any): Thread {
   const room = String(s.roomName || '').toLowerCase();
   const ext = s.rawTranscript?.extractedData || {};
   const ep = ext.episodes?.[0] || {};
 
-  // Formulate humanized title
-  let title = s.summary ? (s.summary.length > 45 ? s.summary.slice(0, 42) + '…' : s.summary) : 'CBT Session';
-  if (room.includes('recall')) {
-    title = 'Imposter Panic & Reframe Recall';
-  } else if (room.includes('boundaries')) {
-    title = 'Work-Life Boundaries with Julian';
-  } else if (room.includes('daily_drill')) {
-    title = 'Morning Physiological Sigh & Standup with Clara';
-  } else if (room.includes('ondemand_calm')) {
-    title = 'Midday Grounding for Stakeholder Demo';
-  } else if (room.includes('weekly_intake') || room.includes('initial')) {
-    title = 'Project Aurora Presentation & Marcus Critique';
-  }
+  // Formulate humanized title focusing strictly on the main objective
+  const title = deriveObjectiveTitle(s);
 
   // Determine mode / agent name
-  const mode = (ext.mode || (room.includes('daily') ? 'DAILY' : room.includes('ondemand') ? 'ON_DEMAND' : 'WEEKLY')).toUpperCase();
+  const mode = (ext.mode || (room.includes('daily') ? 'DAILY' : room.includes('ondemand') || room.includes('companion') ? 'ON_DEMAND' : 'WEEKLY')).toUpperCase();
   const agentName =
     mode === 'DAILY'
       ? 'Daily exercise therapist'
       : mode === 'ON_DEMAND'
       ? 'On-demand therapist'
       : 'Weekly main therapist';
+
+  // Determine whether it is a voice agent session or chat session
+  const isVoice = room.startsWith('therapy_') || s.isVoice === true || (!room.startsWith('ondemand_chat_') && !room.includes('_chat_'));
 
   // Format messages
   const rawMessages = Array.isArray(s.messages) && s.messages.length > 0
@@ -300,6 +435,8 @@ export function formatSessionToThread(s: any): Thread {
     themes,
     takeaway,
     ended: true,
+    isVoice,
+    sessionType: isVoice ? 'voice' : 'chat',
   };
 }
 
@@ -328,8 +465,13 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.sessions)) {
-          if (data.sessions.length > 0) {
-            const mappedThreads: Thread[] = data.sessions.map(formatSessionToThread);
+          const validSessions = data.sessions.filter(
+            (s: any) =>
+              (Array.isArray(s.messages) && s.messages.length > 0) ||
+              (Array.isArray(s.rawTranscript?.turns) && s.rawTranscript.turns.length > 0)
+          );
+          if (validSessions.length > 0) {
+            const mappedThreads: Thread[] = validSessions.map(formatSessionToThread);
             setThreads(mappedThreads);
             try {
               localStorage.setItem(STORAGE_KEY, JSON.stringify(mappedThreads));
@@ -405,7 +547,11 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
             t.id === 'making-room-for-myself'
           );
           if (!hasDummy && parsed.length > 0) {
-            setThreads(parsed);
+            const sanitizedParsed = (parsed as Thread[]).map((t: any) => ({
+              ...t,
+              title: deriveObjectiveTitle(t),
+            }));
+            setThreads(sanitizedParsed);
           } else {
             setThreads(demoThreads);
             localStorage.setItem(STORAGE_KEY, JSON.stringify(demoThreads));
@@ -421,6 +567,19 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
     loadBackendSessions().finally(() => {
       setReady(true);
     });
+
+    const handleSessionUpdate = () => {
+      loadBackendSessions();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('hope-session-updated', handleSessionUpdate);
+      window.addEventListener('focus', handleSessionUpdate);
+      return () => {
+        window.removeEventListener('hope-session-updated', handleSessionUpdate);
+        window.removeEventListener('focus', handleSessionUpdate);
+      };
+    }
   }, [loadBackendSessions]);
 
   function update(next: Thread[]) {
@@ -432,6 +591,27 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const remove = useCallback(async (id: string) => {
+    // 1. Optimistically remove from state and local storage
+    setThreads((prev) => {
+      const next = prev.filter((t) => t.id !== id);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    // 2. Call server endpoint to delete from PostgreSQL and FalkorDB
+    try {
+      await fetch(`/api/sessions/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (err) {
+      console.warn('[ThreadProvider] Error deleting session on backend:', err);
+    }
+  }, []);
+
   return (
     <ThreadContext.Provider
       value={{
@@ -439,7 +619,7 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
         ready,
         error,
         save: (thread) => update([thread, ...threads.filter((t) => t.id !== thread.id)]),
-        remove: (id) => update(threads.filter((t) => t.id !== id)),
+        remove,
         reloadFromBackend: loadBackendSessions,
         fetchThreadById,
       }}

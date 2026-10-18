@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
+import prisma from '@/lib/db';
 import {
   AccessToken,
   type AccessTokenOptions,
@@ -60,7 +62,9 @@ async function handleToken(req: Request, body: any) {
     // Consistent patient identity so therapeutic graph memory persists across sessions
     const url = new URL(req.url);
     const queryUserId = url.searchParams.get('userId');
+    const queryUserName = url.searchParams.get('userName') || url.searchParams.get('name');
     const bodyUserId = body?.userId || body?.user_id;
+    const bodyUserName = body?.userName || body?.name;
 
     // Check cookie
     const cookieHeader = req.headers.get('cookie') || '';
@@ -82,12 +86,36 @@ async function handleToken(req: Request, body: any) {
       ? (rawMode === 'checkin' ? 'companion' : rawMode)
       : 'weekly';
 
-    const participantIdentity =
-      queryUserId || bodyUserId || cookieUserId || process.env.DEFAULT_PATIENT_ID || 'patient_vatsal';
+    // Resolve current authenticated session
+    let sessionUser: any = null;
+    try {
+      const session = await auth();
+      sessionUser = session?.user;
+    } catch {}
 
-    const queryUserName = url.searchParams.get('userName');
-    const bodyUserName = body?.userName || body?.name;
-    const participantName = queryUserName || bodyUserName || 'Vatsal';
+    const participantIdentity =
+      queryUserId ||
+      bodyUserId ||
+      sessionUser?.id ||
+      cookieUserId ||
+      'anonymous_patient';
+
+    let resolvedName = queryUserName || bodyUserName || sessionUser?.name || sessionUser?.email?.split('@')[0];
+
+    // If name not in query/session, look up in PostgreSQL
+    if (!resolvedName && participantIdentity && participantIdentity !== 'anonymous_patient') {
+      try {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: participantIdentity },
+          select: { name: true, email: true },
+        });
+        if (dbUser) {
+          resolvedName = dbUser.name || dbUser.email?.split('@')[0];
+        }
+      } catch {}
+    }
+
+    const participantName = resolvedName || 'Friend';
 
     const requestedRoomName =
       body?.room_name ||

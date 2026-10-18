@@ -367,7 +367,7 @@ async def on_session_end(ctx: JobContext) -> None:
                 user_identity = parts[1]
 
         if not user_identity:
-            user_identity = "patient_vatsal"
+            user_identity = "anonymous_patient"
 
         print(
             f"[AGENT] Captured {len(transcript)} turns for user '{user_identity}'. Forwarding to {EXPRESS_BACKEND_URL}...",
@@ -502,8 +502,8 @@ async def my_agent(ctx: JobContext):
             return
         _bootstrapped = True
 
-        patient_name = user_id
-        # Source C: Check participant metadata if available
+        # Resolve clean display name for opening greeting
+        raw_name = None
         if participant_metadata:
             try:
                 p_meta = json.loads(participant_metadata)
@@ -514,10 +514,20 @@ async def my_agent(ctx: JobContext):
                     if p_meta.get("isInitialSession") or p_meta.get("initial") or m == "initial":
                         is_initial_flag = True
                         session_mode = "initial"
-                    if p_meta.get("userName") or p_meta.get("name"):
-                        patient_name = p_meta.get("userName") or p_meta.get("name")
+                    raw_name = p_meta.get("userName") or p_meta.get("name")
             except Exception:
                 pass
+
+        if not raw_name and user_id:
+            # Check user_id if it's an actual human name (not an internal ID or UUID)
+            if not user_id.startswith(("patient_", "user_", "anonymous_")) and not any(c in user_id for c in ("-", "@", "_")):
+                raw_name = user_id.capitalize()
+
+        patient_name = raw_name.strip() if raw_name and str(raw_name).strip() else None
+        if patient_name and patient_name.lower() in ("patient_vatsal", "anonymous", "anonymous_patient", "user", "there"):
+            patient_name = None
+
+        name_target = f" {patient_name}" if patient_name else ""
 
         # Check FalkorDB history: "remember that this particular should only be for new users for their first session"
         has_prior_history = False
@@ -539,8 +549,9 @@ async def my_agent(ctx: JobContext):
 
         ctx.room._session_mode = session_mode
 
+        display_label = patient_name or user_id
         print(f"\n=======================================================", flush=True)
-        print(f"🌟 [SESSION START] Role: '{session_mode.upper()}' | Patient: '{patient_name}' ({user_id})", flush=True)
+        print(f"🌟 [SESSION START] Role: '{session_mode.upper()}' | Patient: '{display_label}' ({user_id})", flush=True)
         print(f"🏛️ Room: {ctx.room.name}", flush=True)
         print(f"=======================================================", flush=True)
         logger.info(f"Retrieving session-start FalkorDB memory for '{user_id}' (mode: {session_mode})...")
@@ -554,7 +565,7 @@ async def my_agent(ctx: JobContext):
                 )
             except Exception as mem_err:
                 print(f"[SESSION START] FalkorDB memory fetch note: {mem_err}. Proceeding with fresh session.", flush=True)
-                memory_prompt = f"- Patient ID: {user_id}\n- Patient Name: {patient_name}\n- Role Mode: {session_mode.upper()}\n- Status: Safe CBT session."
+                memory_prompt = f"- Patient ID: {user_id}\n- Patient Name: {display_label}\n- Role Mode: {session_mode.upper()}\n- Status: Safe CBT session."
 
             print(f"[SESSION START] FalkorDB memory ready ({len(memory_prompt)} chars). Updating {session_mode.upper()} agent...", flush=True)
             logger.info(f"FalkorDB briefing for '{user_id}' [{session_mode.upper()}]:\n{memory_prompt}")
@@ -568,26 +579,36 @@ async def my_agent(ctx: JobContext):
             )
             if session_mode == "initial":
                 greeting_instructions = (
-                    f"{vocal_lead}warmly welcome {patient_name} to Hope for their very first initial intake session. "
+                    f"{vocal_lead}warmly welcome{name_target} to Hope for their very first initial intake session. "
                     f"Acknowledge that taking this first step to start therapy is a courageous and meaningful moment, "
                     f"reassure them that this is their safe, confidential, and completely unhurried space, "
                     f"and gently invite them to share what brought them to reach out or what has been feeling heaviest lately."
                 )
             elif session_mode == "daily":
+                today_ex = {}
+                try:
+                    today_ex = await asyncio.to_thread(graph_memory.get_today_assigned_exercise, user_id)
+                except Exception as ex_err:
+                    logger.warning(f"Could not fetch today's assigned exercise: {ex_err}")
+
+                day_num = today_ex.get("day_number", 1)
+                ex_name = today_ex.get("exercise_name", "your daily CBT exercise")
+                target_q = today_ex.get("target_question", "how did today's practice go for you?")
+
                 greeting_instructions = (
-                    f"{vocal_lead}greet {patient_name} warmly as Hope, their daily CBT exercise coach. "
-                    f"Welcome them to today's quick practice check-in, and ask how today's CBT exercise is going "
-                    f"or if they would like to do a quick practice together right now."
+                    f"{vocal_lead}greet{name_target} warmly as Hope, their daily CBT exercise coach. "
+                    f"Welcome them to Day {day_num} of their practice plan focusing on {ex_name}. "
+                    f"Directly ask them today's assigned coaching question: '{target_q}'"
                 )
             elif session_mode == "companion":
                 greeting_instructions = (
-                    f"{vocal_lead}greet {patient_name} warmly and gently as Hope, their companion. "
+                    f"{vocal_lead}greet{name_target} warmly and gently as Hope, their companion. "
                     f"Let them know you are right here with them in this moment, and gently ask what is on their mind "
                     f"or how they are feeling right now."
                 )
             else:  # weekly
                 greeting_instructions = (
-                    f"{vocal_lead}greet {patient_name} warmly as Hope, their weekly CBT therapist. "
+                    f"{vocal_lead}greet{name_target} warmly as Hope, their weekly CBT therapist. "
                     f"Welcome them gently to their weekly therapy session, let them know this is a safe and unhurried space, "
                     f"and ask how their week has been feeling and what they would like to focus on today."
                 )

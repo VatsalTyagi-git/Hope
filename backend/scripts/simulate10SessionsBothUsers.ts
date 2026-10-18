@@ -1,7 +1,7 @@
 import falkor from '../db/falkor.js';
 import { syncSessionToFalkorDB } from '../services/graphMemorySync.js';
 
-async function main() {
+async function main(): Promise<void> {
   console.log('================================================================');
   console.log('🚀 SIMULATING 10 SESSIONS EACH FOR 2 DIFFERENT USERS (20 TOTAL)');
   console.log('================================================================\n');
@@ -623,7 +623,7 @@ async function main() {
     WHERE n1 = n2
     RETURN count(n1) AS sharedNodes
   `, { params: { email1: sarahEmail, email2: alexEmail } });
-  const sharedNodes = (sharedNodesRes.data || sharedNodesRes.result_set || [])[0]?.sharedNodes || 0;
+  const sharedNodes = (sharedNodesRes.data || (sharedNodesRes as any).result_set || [])[0]?.sharedNodes || 0;
 
   const crossEdgeRes = await g.query(`
     MATCH (n1)-[r]->(n2)
@@ -631,19 +631,19 @@ async function main() {
       AND (n2.userId = $email2 OR n2.id = $email2)
     RETURN count(r) AS crossEdges
   `, { params: { email1: sarahEmail, email2: alexEmail } });
-  const crossEdges = (crossEdgeRes.data || crossEdgeRes.result_set || [])[0]?.crossEdges || 0;
+  const crossEdges = (crossEdgeRes.data || (crossEdgeRes as any).result_set || [])[0]?.crossEdges || 0;
 
   console.log(`\n📊 SARAH MILLER ("${sarahEmail}"):`);
-  console.log(`  - Direct sessions attached to Primary User node via [:HAS_SESSION]: ${(sarahDirectSessions.data || []).length}/10`);
+  console.log(`  - Direct sessions attached to Primary User node via [:HAS_SESSION]: ${((sarahDirectSessions.data || []) as any[]).length}/10`);
   console.log('  - Node Inventory in Sarah’s Tree:');
-  for (const row of (sarahNodeStats.data || [])) {
+  for (const row of ((sarahNodeStats.data || []) as any[])) {
     console.log(`      * ${row.label}: ${row.count}`);
   }
 
   console.log(`\n📊 ALEX CHEN ("${alexEmail}"):`);
-  console.log(`  - Direct sessions attached to Primary User node via [:HAS_SESSION]: ${(alexDirectSessions.data || []).length}/10`);
+  console.log(`  - Direct sessions attached to Primary User node via [:HAS_SESSION]: ${((alexDirectSessions.data || []) as any[]).length}/10`);
   console.log('  - Node Inventory in Alex’s Tree:');
-  for (const row of (alexNodeStats.data || [])) {
+  for (const row of ((alexNodeStats.data || []) as any[])) {
     console.log(`      * ${row.label}: ${row.count}`);
   }
 
@@ -663,7 +663,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   console.error('Simulation error:', err);
   process.exit(1);
 });

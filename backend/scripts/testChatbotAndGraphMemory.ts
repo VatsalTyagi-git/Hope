@@ -1,4 +1,3 @@
-import fetch from 'node-fetch';
 import prisma from '../db/index.js';
 import falkor from '../db/falkor.js';
 import dotenv from 'dotenv';
@@ -7,7 +6,7 @@ dotenv.config();
 const USER_ID = '0ccbaecf-43fd-4b7f-91e0-d32233482b07';
 const NEXT_URL = 'http://localhost:3000';
 
-async function main() {
+async function main(): Promise<void> {
   console.log('🚀 ========================================================');
   console.log('🧪 TESTING CHATBOT ON DASHBOARD + POSTGRESQL + FALKORDB MEMORY');
   console.log('========================================================\n');
@@ -17,8 +16,8 @@ async function main() {
   try {
     const rootCheck = await fetch(`${NEXT_URL}/chat`, { method: 'GET' });
     console.log(`   Next.js /chat HTTP status: ${rootCheck.status} ${rootCheck.statusText}`);
-  } catch (err) {
-    console.error('❌ Could not connect to Next.js on port 3000:', err.message);
+  } catch (err: any) {
+    console.error('❌ Could not connect to Next.js on port 3000:', err?.message || err);
     process.exit(1);
   }
 
@@ -46,7 +45,7 @@ async function main() {
     throw new Error(`Chat API failed with status ${chatRes1.status}: ${errText}`);
   }
 
-  const chatData1 = await chatRes1.json();
+  const chatData1 = (await chatRes1.json()) as any;
   console.log('✅ Hope Companion Response 1 received:');
   console.log(`"${chatData1.message?.content}"\n`);
 
@@ -75,7 +74,7 @@ async function main() {
     body: JSON.stringify(chatTurn2),
   });
 
-  const chatData2 = await chatRes2.json();
+  const chatData2 = (await chatRes2.json()) as any;
   console.log('✅ Hope Companion Response 2 received:');
   console.log(`"${chatData2.message?.content}"\n`);
   const reply2 = chatData2.message?.content || '';
@@ -108,14 +107,14 @@ async function main() {
     throw new Error(`Transcript API failed with status ${transcriptRes.status}: ${errText}`);
   }
 
-  const transcriptData = await transcriptRes.json();
+  const transcriptData = (await transcriptRes.json()) as any;
   console.log('✅ Transcript Persist Result:');
   console.log(`   Session ID: ${transcriptData.sessionId}`);
   console.log(`   PostgreSQL DB Saved: ${transcriptData.dbSaved ? 'YES ✅' : 'NO ❌'}`);
   console.log(`   LLM CBT Extracted: ${transcriptData.llmExtracted ? 'YES ✅' : 'NO ❌'}`);
   console.log(`   FalkorDB Synced: ${transcriptData.falkorSynced ? 'YES ✅' : 'NO ❌'}`);
   console.log(`   Summary: "${transcriptData.summary}"`);
-  console.log(`   Distortions:`, transcriptData.extractedData?.episodes?.map(e => e.distortion) || []);
+  console.log(`   Distortions:`, transcriptData.extractedData?.episodes?.map((e: any) => e.distortion) || []);
   console.log(`   Takeaway / Reframe:`, transcriptData.extractedData?.episodes?.[0]?.reframed_thought || transcriptData.extractedData?.takeaway);
 
   // Step 5: Verify in PostgreSQL directly
@@ -136,28 +135,28 @@ async function main() {
   // Step 6: Verify in FalkorDB directly
   console.log('\n6️⃣ Verifying Graph Memory in FalkorDB directly...');
   try {
-    const result = await falkor.query(`
+    const g = await falkor.getGraph();
+    const result = await g.query(`
       MATCH (p:User {id: $userId})-[r:HAD_SESSION]->(s:Session)
       RETURN s.roomName as roomName, s.id as dbId, s.endedAt as sessionDate
       ORDER BY s.endedAt DESC
       LIMIT 3
-    `, { userId: USER_ID });
+    `, { params: { userId: USER_ID } });
 
-    console.log(`✅ FalkorDB query returned ${result.data?.length || 0} recent sessions for Elena:`);
-    if (result.data) {
-      result.data.forEach((row, i) => {
-        console.log(`   ${i + 1}. Room: ${row.roomName}, ID: ${row.dbId}, Date: ${row.sessionDate}`);
-      });
-    }
-  } catch (falkorErr) {
-    console.error('⚠️ FalkorDB query note:', falkorErr.message);
+    const rows = (result.data || (result as any).result_set || []) as any[];
+    console.log(`✅ FalkorDB query returned ${rows.length} recent sessions for Elena:`);
+    rows.forEach((row, i) => {
+      console.log(`   ${i + 1}. Room: ${row.roomName}, ID: ${row.dbId}, Date: ${row.sessionDate}`);
+    });
+  } catch (falkorErr: any) {
+    console.error('⚠️ FalkorDB query note:', falkorErr?.message || falkorErr);
   }
 
   // Step 7: Verify Dashboard API GET /api/sessions returns the new session
   console.log('\n7️⃣ Verifying Dashboard GET /api/sessions API returns the new session...');
   const dashRes = await fetch(`${NEXT_URL}/api/sessions?userId=${encodeURIComponent(USER_ID)}`);
-  const dashData = await dashRes.json();
-  const foundInDash = dashData.sessions?.some((s) => s.id === transcriptData.sessionId);
+  const dashData = (await dashRes.json()) as any;
+  const foundInDash = dashData.sessions?.some((s: any) => s.id === transcriptData.sessionId);
   console.log(`✅ Dashboard Sessions count: ${dashData.sessions?.length}`);
   console.log(`   Newly saved session present in dashboard list: ${foundInDash ? 'YES ✅' : 'NO ❌'}`);
 
@@ -165,7 +164,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   console.error('\n❌ Test failed with error:', err);
   process.exit(1);
 });

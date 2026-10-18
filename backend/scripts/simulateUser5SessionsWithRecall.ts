@@ -10,11 +10,11 @@ const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 const apiKey = process.env.GOOGLE_API_KEY;
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
-async function sleep(ms) {
+async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function runSimulation() {
+async function runSimulation(): Promise<void> {
   console.log('================================================================');
   console.log('🧠 HOPE CBT AI THERAPIST: 5-SESSION GRAPH MEMORY SIMULATION');
   console.log('================================================================\n');
@@ -41,7 +41,7 @@ async function runSimulation() {
     });
 
     if (signupRes.ok) {
-      const data = await signupRes.json();
+      const data = (await signupRes.json()) as any;
       userId = data.user?.id || userId;
       console.log(`✅ [SIGNUP OK] Registered new account via Frontend Auth API:`);
       console.log(`   - ID:    ${userId}`);
@@ -139,7 +139,7 @@ async function runSimulation() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(session1Payload),
   });
-  const s1Data = await s1Res.json();
+  const s1Data = (await s1Res.json()) as any;
   console.log(`✅ Session 1 Ingested! PostgreSQL Session ID: ${s1Data.sessionId || 'OK'}, FalkorDB Synced: ${s1Data.falkorSynced}`);
   console.log(`   CBT Summary: "${s1Data.cbtSummary}"\n`);
 
@@ -176,7 +176,7 @@ async function runSimulation() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(session2Payload),
   });
-  const s2Data = await s2Res.json();
+  const s2Data = (await s2Res.json()) as any;
   console.log(`✅ Session 2 Ingested! FalkorDB Synced: ${s2Data.falkorSynced}`);
   console.log(`   CBT Summary: "${s2Data.cbtSummary}"\n`);
 
@@ -221,7 +221,7 @@ async function runSimulation() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(session3Payload),
   });
-  const s3Data = await s3Res.json();
+  const s3Data = (await s3Res.json()) as any;
   console.log(`✅ Session 3 Ingested! FalkorDB Synced: ${s3Data.falkorSynced}`);
   console.log(`   CBT Summary: "${s3Data.cbtSummary}"\n`);
 
@@ -262,7 +262,7 @@ async function runSimulation() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(session4Payload),
   });
-  const s4Data = await s4Res.json();
+  const s4Data = (await s4Res.json()) as any;
   console.log(`✅ Session 4 Ingested! FalkorDB Synced: ${s4Data.falkorSynced}`);
   console.log(`   CBT Summary: "${s4Data.cbtSummary}"\n`);
 
@@ -287,7 +287,7 @@ async function runSimulation() {
   `, { params: { userId } });
 
   console.log('📊 Isolated Graph Nodes directly attached to User:');
-  const rows = userStats.data || userStats.result_set || [];
+  const rows = (userStats.data || (userStats as any).result_set || []) as any[];
   rows.forEach((r) => {
     console.log(`   - ${r.node_type || r[0]}: ${r.count || r[1]}`);
   });
@@ -314,7 +314,7 @@ async function runSimulation() {
     LIMIT 5
   `, { params: { userId } });
 
-  const recallData = recallRes.data || recallRes.result_set || [];
+  const recallData = (recallRes.data || (recallRes as any).result_set || []) as any[];
   console.log(`✨ Total Matching Graph Memory Records Found: ${recallData.length}`);
 
   let retrievedPerson = '';
@@ -360,19 +360,23 @@ Elena asks: "Therapist, I'm feeling anxious again like in our very first session
 Respond with warm, empathetic, clinical continuity, referencing Marcus, Project Aurora, the distortion, the reframe, and how her recent consistency shows her growth.
 `;
 
-  const geminiResponse = await ai.models.generateContent({
-    model: 'gemini-3.1-flash-lite',
-    contents: 'Answer Elena with your warm clinical response based on your graph memory recall.',
-    config: {
-      systemInstruction: therapistInstruction,
-      temperature: 0.6,
-    },
-  });
+  if (ai) {
+    const geminiResponse = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: 'Answer Elena with your warm clinical response based on your graph memory recall.',
+      config: {
+        systemInstruction: therapistInstruction,
+        temperature: 0.6,
+      },
+    });
 
-  console.log('\n🎙️ [AI THERAPIST RESPONSE IN SESSION 5 USING GRAPH MEMORY]:');
-  console.log('----------------------------------------------------------------');
-  console.log(geminiResponse.text.trim());
-  console.log('----------------------------------------------------------------\n');
+    console.log('\n🎙️ [AI THERAPIST RESPONSE IN SESSION 5 USING GRAPH MEMORY]:');
+    console.log('----------------------------------------------------------------');
+    console.log(geminiResponse.text?.trim() || '');
+    console.log('----------------------------------------------------------------\n');
+  } else {
+    console.log('ℹ️ GOOGLE_API_KEY not configured, skipped Gemini speech generation.');
+  }
 
   console.log('================================================================');
   console.log('🏆 VERIFICATION RESULT:');
@@ -386,7 +390,7 @@ Respond with warm, empathetic, clinical continuity, referencing Marcus, Project 
   process.exit(0);
 }
 
-runSimulation().catch((err) => {
+runSimulation().catch((err: unknown) => {
   console.error('❌ Simulation Error:', err);
   process.exit(1);
 });

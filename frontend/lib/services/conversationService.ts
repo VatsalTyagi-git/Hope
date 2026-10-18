@@ -46,7 +46,7 @@ const SEED_CONVERSATIONS: Conversation[] = [
       title: 'Imposter Panic & Reframe Recall',
       dateLabel: 'Today • Weekly main therapist',
       whatWeExplored:
-        'The patient reached out during an acute episode of imposter anxiety triggered by an upcoming presentation. Successfully recalled Marcus and Project Aurora from graph memory, identifying catastrophizing and re-applying a validated cognitive reframe.',
+        'An exploration of imposter anxiety triggered by an upcoming presentation, identifying catastrophizing and re-applying a validated cognitive reframe with Marcus and Project Aurora.',
       tags: ['Catastrophizing', 'Imposter Panic', 'Memory Recall'],
       carryWithYou:
         'Constructive critique on distributed failover architecture is a normal part of engineering review, not proof that I am incompetent or getting fired. I solved three critical bugs last sprint and cut query latency by 40%.',

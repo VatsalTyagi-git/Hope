@@ -47,6 +47,13 @@ export async function GET(req: Request) {
       }
     }
 
+    // Filter out sessions that have no messages or recorded turns
+    sessions = sessions.filter(
+      (s) =>
+        (Array.isArray(s.messages) && s.messages.length > 0) ||
+        (Array.isArray(s.rawTranscript?.turns) && s.rawTranscript.turns.length > 0)
+    );
+
     return NextResponse.json({
       success: true,
       count: sessions.length,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowUpRight, Eye, EyeOff, Heart, Loader2 } from 'lucide-react';
@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export function AuthScreen({ signup = false }: { signup?: boolean }) {
   const router = useRouter();
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { user, loading: authLoading, signIn, signUp, signInWithGoogle } = useAuth();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -21,6 +21,26 @@ export function AuthScreen({ signup = false }: { signup?: boolean }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submittedMessage, setSubmittedMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace('/dashboard');
+    }
+  }, [user, authLoading, router]);
+
+  if (authLoading || user) {
+    return (
+      <div className="auth-page theme-purple min-h-screen flex flex-col items-center justify-center">
+        <SideArt />
+        <SiteHeader />
+        <main className="auth-form-wrap flex flex-col items-center text-center">
+          <Loader2 className="size-8 animate-spin text-primary mb-3" />
+          <h2 className="text-foreground font-serif text-xl">Entering your Hope space…</h2>
+          <p className="text-muted-foreground text-xs mt-1">You are already signed in. Taking you to your dashboard.</p>
+        </main>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -211,7 +231,7 @@ export function AuthScreen({ signup = false }: { signup?: boolean }) {
         <div className="auth-notice">
           Hope offers AI-guided wellbeing support, not clinical care.
           <br />
-          Your account is secured with Supabase Auth.
+          Your personal space is private, secure, and confidential.
         </div>
       </main>
     </div>

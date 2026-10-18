@@ -2,7 +2,7 @@ import falkor from '../db/falkor.js';
 
 const BACKEND_URL = 'http://localhost:5000';
 
-async function simulate() {
+async function simulate(): Promise<void> {
   console.log('================================================================');
   console.log('🚀 SIMULATING 2 SESSIONS FOR 2 DIFFERENT USERS (DIFFERENT EMAILS)');
   console.log('================================================================\n');
@@ -115,7 +115,7 @@ async function simulate() {
       transcript: user1.transcript,
     }),
   });
-  const data1 = await res1.json();
+  const data1 = (await res1.json()) as any;
   console.log(`✅ Session 1 result for ${user1.email}:`, data1.message);
   console.log(`   Session ID: ${data1.sessionId}`);
   console.log(`   CBT Summary: "${data1.extractedData?.summary || 'N/A'}"\n`);
@@ -134,7 +134,7 @@ async function simulate() {
       transcript: user2.transcript,
     }),
   });
-  const data2 = await res2.json();
+  const data2 = (await res2.json()) as any;
   console.log(`✅ Session 2 result for ${user2.email}:`, data2.message);
   console.log(`   Session ID: ${data2.sessionId}`);
   console.log(`   CBT Summary: "${data2.extractedData?.summary || 'N/A'}"\n`);
@@ -174,27 +174,27 @@ async function simulate() {
     RETURN count(*) AS crossCount
   `, { params: { email1: user1.email, email2: user2.email } });
 
-  const crossCount = (crossPaths.data || crossPaths.result_set || [])[0]?.crossCount || 0;
+  const crossCount = (crossPaths.data || (crossPaths as any).result_set || [])[0]?.crossCount || 0;
 
   console.log('\n================================================================');
   console.log(`🌳 USER 1: "${user1.email}" PRIMARY NODE DIRECT EDGES:`);
   console.log('================================================================');
-  for (const row of (tree1.data || tree1.result_set || [])) {
+  for (const row of ((tree1.data || (tree1 as any).result_set || []) as any[])) {
     console.log(`  (:User {id: "${user1.email}"}) -[:${row.rel}]-> (:${row.targetLabel} {id: "${row.targetId}"})`);
   }
   console.log('\nTotal nodes owned by User 1:');
-  for (const row of (allNodesUser1.data || allNodesUser1.result_set || [])) {
+  for (const row of ((allNodesUser1.data || (allNodesUser1 as any).result_set || []) as any[])) {
     console.log(`  - ${row.label}: ${row.count}`);
   }
 
   console.log('\n================================================================');
   console.log(`🌳 USER 2: "${user2.email}" PRIMARY NODE DIRECT EDGES:`);
   console.log('================================================================');
-  for (const row of (tree2.data || tree2.result_set || [])) {
+  for (const row of ((tree2.data || (tree2 as any).result_set || []) as any[])) {
     console.log(`  (:User {id: "${user2.email}"}) -[:${row.rel}]-> (:${row.targetLabel} {id: "${row.targetId}"})`);
   }
   console.log('\nTotal nodes owned by User 2:');
-  for (const row of (allNodesUser2.data || allNodesUser2.result_set || [])) {
+  for (const row of ((allNodesUser2.data || (allNodesUser2 as any).result_set || []) as any[])) {
     console.log(`  - ${row.label}: ${row.count}`);
   }
 
@@ -213,7 +213,7 @@ async function simulate() {
   process.exit(0);
 }
 
-simulate().catch((err) => {
+simulate().catch((err: unknown) => {
   console.error('Simulation error:', err);
   process.exit(1);
 });

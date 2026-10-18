@@ -1,4 +1,34 @@
 import falkor from '../db/falkor.js';
+import type { CbtExtractedData } from './cbtExtractor.js';
+
+export interface SessionRecordInput {
+  id: string;
+  userId?: string;
+  startedAt?: Date | string | number | null;
+  endedAt?: Date | string | number | null;
+  [key: string]: any;
+}
+
+export interface SyncSessionParams {
+  userId: string;
+  sessionRecord: SessionRecordInput;
+  extractedData: Partial<CbtExtractedData> & Record<string, any>;
+}
+
+export interface SyncUserProfileParams {
+  userId: string;
+  name?: string;
+  ageRange?: string;
+  focusAreas?: string[];
+  conversationStyle?: string;
+  preferredTime?: string;
+  preferredMode?: string;
+  bio?: string;
+}
+
+export interface SyncResult {
+  success: boolean;
+}
 
 /**
  * Syncs the LLM-extracted CBT session data into FalkorDB.
@@ -14,15 +44,28 @@ export async function syncSessionToFalkorDB({
   userId,
   sessionRecord,
   extractedData,
-}) {
+}: SyncSessionParams): Promise<SyncResult> {
   const g = await falkor.getGraph();
   const now = Math.floor(Date.now() / 1000);
-  const startedAt = sessionRecord.startedAt
-    ? Math.floor(new Date(sessionRecord.startedAt).getTime() / 1000)
-    : now - 300;
-  const endedAt = sessionRecord.endedAt
-    ? Math.floor(new Date(sessionRecord.endedAt).getTime() / 1000)
-    : now;
+
+  const parseEpochSeconds = (val: any, fallback: number): number => {
+    if (!val) return fallback;
+    if (typeof val === 'number') {
+      if (val > 1e11) return Math.floor(val / 1000); // ms -> s
+      if (val > 1e8) return Math.floor(val);         // already s
+    }
+    if (typeof val === 'string' && !isNaN(Number(val))) {
+      const num = Number(val);
+      if (num > 1e11) return Math.floor(num / 1000);
+      if (num > 1e8) return Math.floor(num);
+    }
+    const d = new Date(val);
+    const ms = d.getTime();
+    return isNaN(ms) ? fallback : Math.floor(ms / 1000);
+  };
+
+  const startedAt = parseEpochSeconds(sessionRecord.startedAt, now - 300);
+  const endedAt = parseEpochSeconds(sessionRecord.endedAt, now);
 
   const mode = (extractedData.mode || 'WEEKLY').toUpperCase();
   const sessionId = sessionRecord.id;
@@ -324,12 +367,18 @@ export async function syncSessionToFalkorDB({
     );
   }
 
-  // 6. Update Dedicated User AgentState
+  // 6. Update Dedicated User AgentState & Schedule Next Weekly Session
   const state = extractedData.agent_state || {};
   const recMode = state.recommended_next_mode || (mode === 'WEEKLY' ? 'DAILY' : 'WEEKLY');
   const urgentFlag = Boolean(state.urgent_flag);
   const handoffContext = state.handoff_context || '';
   const homework = extractedData.homework || null;
+
+  const baseTime = endedAt || startedAt || now;
+  const baseDate = new Date(baseTime * 1000);
+  const sessionDateStr = baseDate.toISOString().split('T')[0];
+  const nextWeeklyTimestamp = baseTime + 7 * 86400;
+  const nextWeeklyDateStr = new Date(nextWeeklyTimestamp * 1000).toISOString().split('T')[0];
 
   await g.query(
     `
@@ -337,14 +386,26 @@ export async function syncSessionToFalkorDB({
     SET a.recommended_next_mode = $recMode,
         a.urgent_flag = $urgentFlag,
         a.handoff_context = $handoffContext,
+        a.latest_session_id = $sessionId,
+        a.latest_session_date = $sessionDateStr,
+        a.latest_session_at = $baseTime,
+        a.next_weekly_session_date = $nextWeeklyDateStr,
+        a.next_weekly_session_at = $nextWeeklyTimestamp,
         a.updated_at = $now
+    SET u.next_weekly_session_date = $nextWeeklyDateStr,
+        u.latest_session_date = $sessionDateStr
     `,
     {
       params: {
         userId,
+        sessionId,
         recMode,
         urgentFlag,
         handoffContext,
+        sessionDateStr,
+        baseTime,
+        nextWeeklyDateStr,
+        nextWeeklyTimestamp,
         now,
       },
     }
@@ -372,6 +433,55 @@ export async function syncSessionToFalkorDB({
         },
       }
     );
+  }
+
+  // 6b. Sync Structured 7-Day Daily Exercise Plan (scoped strictly to userId with assigned dates)
+  if (Array.isArray(extractedData.weekly_daily_plan) && extractedData.weekly_daily_plan.length > 0) {
+    for (const dayPlan of extractedData.weekly_daily_plan) {
+      if (!dayPlan || !dayPlan.day_number) continue;
+      const dayNumber = Number(dayPlan.day_number);
+      const dayTimestamp = baseTime + (dayNumber * 86400);
+      const assignedDateStr = new Date(dayTimestamp * 1000).toISOString().split('T')[0];
+
+      await g.query(
+        `
+        MATCH (u:User {id: $userId})
+        MATCH (a:AgentState {id: "state_" + $userId})
+        MERGE (de:DailyAssignedExercise {id: "day_ex_" + $userId + "_" + $dayNumber})
+        SET de.userId = $userId,
+            de.day_number = $dayNumber,
+            de.assigned_date = $assignedDate,
+            de.day_title = $dayTitle,
+            de.exercise_name = $exerciseName,
+            de.focus_area = $focusArea,
+            de.instruction = $instruction,
+            de.target_question = $targetQuestion,
+            de.duration_mins = $durationMins,
+            de.assigned_at = $now,
+            de.status = "PENDING"
+        MERGE (a)-[:ASSIGNED_DAY_EXERCISE {day_number: $dayNumber, assigned_date: $assignedDate}]->(de)
+        MERGE (u)-[:HAS_DAY_EXERCISE]->(de)
+        WITH de
+        MATCH (s:Session {id: $sessionId, userId: $userId})
+        MERGE (s)-[:PRESCRIBED_DAY_EXERCISE {day_number: $dayNumber, assigned_date: $assignedDate}]->(de)
+        `,
+        {
+          params: {
+            userId,
+            sessionId,
+            dayNumber,
+            assignedDate: assignedDateStr,
+            dayTitle: dayPlan.day_title || `Day ${dayPlan.day_number} Practice`,
+            exerciseName: dayPlan.exercise_name || '3-Column Thought Record',
+            focusArea: dayPlan.focus_area || 'Cognitive Reframing',
+            instruction: dayPlan.instruction || 'Practice this daily drill mindfully.',
+            targetQuestion: dayPlan.target_question || 'How did today’s exercise feel for you?',
+            durationMins: Number(dayPlan.recommended_duration_mins || 5),
+            now,
+          },
+        }
+      );
+    }
   }
 
   // 7. Explicit Handoff Record (scoped to userId)
@@ -439,4 +549,111 @@ export async function syncSessionToFalkorDB({
   return { success: true };
 }
 
-export default { syncSessionToFalkorDB };
+/**
+ * Synchronizes user profile onboarding / settings directly into FalkorDB graph memory.
+ * Updates (u:User) node properties and creates semantic links to FocusArea and TherapistRule.
+ */
+export async function syncUserProfileToFalkorDB({
+  userId,
+  name,
+  ageRange,
+  focusAreas = [],
+  conversationStyle,
+  preferredTime,
+  preferredMode,
+  bio,
+}: SyncUserProfileParams): Promise<SyncResult> {
+  const g = await falkor.getGraph();
+  const now = Math.floor(Date.now() / 1000);
+
+  console.log(`[FALKORDB SYNC] Syncing user profile for '${userId}' into FalkorDB...`);
+
+  // 1. Merge and update User node with complete profile attributes
+  await g.query(
+    `
+    MERGE (u:User {id: $userId})
+    SET u.name = $name,
+        u.ageRange = $ageRange,
+        u.focusAreas = $focusAreas,
+        u.conversationStyle = $conversationStyle,
+        u.preferredTime = $preferredTime,
+        u.preferredMode = $preferredMode,
+        u.bio = $bio,
+        u.onboardingComplete = true,
+        u.updated_at = $now
+    `,
+    {
+      params: {
+        userId,
+        name: name || 'Friend',
+        ageRange: ageRange || '',
+        focusAreas: Array.isArray(focusAreas) ? focusAreas : [],
+        conversationStyle: conversationStyle || 'gentle',
+        preferredTime: preferredTime || 'Evening (7:00 PM)',
+        preferredMode: preferredMode || 'text',
+        bio: bio || '',
+        now,
+      },
+    }
+  );
+
+  // 2. Ensure AgentState node is attached
+  await g.query(
+    `
+    MERGE (a:AgentState {id: "state_" + $userId})
+    ON CREATE SET a.userId = $userId,
+                  a.recommended_next_mode = "WEEKLY",
+                  a.active_homework = "3-Column Thought Record",
+                  a.homework_streak = 0,
+                  a.urgent_flag = false,
+                  a.handoff_context = "",
+                  a.updated_at = $now
+    SET a.userId = $userId
+    WITH a
+    MATCH (u:User {id: $userId})
+    MERGE (u)-[:HAS_STATE]->(a)
+    `,
+    { params: { userId, now } }
+  );
+
+  // 3. Connect semantic FocusArea nodes
+  if (Array.isArray(focusAreas)) {
+    for (const area of focusAreas) {
+      if (area && typeof area === 'string' && area.trim()) {
+        const cleanArea = area.trim();
+        const safeId = cleanArea.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        await g.query(
+          `
+          MATCH (u:User {id: $userId})
+          MERGE (f:FocusArea {id: "focus_" + $userId + "_" + $safeId, userId: $userId})
+          SET f.name = $cleanArea, f.updated_at = $now
+          MERGE (u)-[:FOCUSES_ON]->(f)
+          `,
+          { params: { userId, safeId, cleanArea, now } }
+        );
+      }
+    }
+  }
+
+  // 4. Connect preferred conversation tone as a TherapistRule
+  if (conversationStyle) {
+    const ruleText =
+      conversationStyle === 'direct'
+        ? 'Patient prefers direct, structured CBT reframing and actionable exercises.'
+        : 'Patient prefers gentle, patient listening with empathetic validation and softer pacing.';
+    await g.query(
+      `
+      MATCH (u:User {id: $userId})
+      MERGE (r:TherapistRule {id: "rule_" + $userId + "_pref_tone"})
+      SET r.rule = $ruleText, r.userId = $userId, r.confidence = 1.0, r.learned_from_mode = "PROFILE"
+      MERGE (u)-[:PREFERS_RULE]->(r)
+      `,
+      { params: { userId, ruleText } }
+    );
+  }
+
+  console.log(`✅ [FALKORDB SYNC] User profile for '${userId}' successfully synced into FalkorDB!`);
+  return { success: true };
+}
+
+export default { syncSessionToFalkorDB, syncUserProfileToFalkorDB };

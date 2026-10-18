@@ -1,7 +1,7 @@
 import falkor from '../db/falkor.js';
 import { syncSessionToFalkorDB } from '../services/graphMemorySync.js';
 
-async function runTest() {
+async function runTest(): Promise<void> {
   console.log('🧪 [TEST] Starting User Isolation & Primary Node Schema Validation...');
 
   // 1. Clear DB
@@ -108,7 +108,7 @@ async function runTest() {
           intensity_before: 9,
           intensity_after: 5,
           reframed_thought: 'The deadline has a buffer and communicating tomorrow morning is acceptable',
-          person: { name: 'Manager Dave', role: 'Manager', sentiment: 'demanding' }, // same name, but MUST be isolated to Bob
+          person: { name: 'Manager Dave', role: 'Manager', sentiment: 'demanding' },
           trigger: { name: 'Quarterly deadline', category: 'Work', intensity: 9 },
           distortion: 'Catastrophizing',
           core_belief: { statement: 'I am helpless against demands', category: 'Helplessness' },
@@ -124,7 +124,7 @@ async function runTest() {
     RETURN s.id AS sessionId, s.mode AS mode
     ORDER BY s.id
   `);
-  const aliceSessions = aliceSessionsRes.data || aliceSessionsRes.result_set || [];
+  const aliceSessions = (aliceSessionsRes.data || (aliceSessionsRes as any).result_set || []) as any[];
   console.log('\n📊 [TEST] Alice direct sessions connected to primary User node:', aliceSessions);
   if (aliceSessions.length !== 2) {
     throw new Error(`Expected Alice to have 2 directly connected sessions via [:HAS_SESSION], got ${aliceSessions.length}`);
@@ -135,7 +135,7 @@ async function runTest() {
     MATCH (u:User {id: "bob_202"})-[:HAS_SESSION]->(s:Session)
     RETURN s.id AS sessionId, s.mode AS mode
   `);
-  const bobSessions = bobSessionsRes.data || bobSessionsRes.result_set || [];
+  const bobSessions = (bobSessionsRes.data || (bobSessionsRes as any).result_set || []) as any[];
   console.log('📊 [TEST] Bob direct sessions connected to primary User node:', bobSessions);
   if (bobSessions.length !== 1) {
     throw new Error(`Expected Bob to have 1 directly connected session via [:HAS_SESSION], got ${bobSessions.length}`);
@@ -147,7 +147,7 @@ async function runTest() {
     WHERE target:User AND target.id = "bob_202"
     RETURN count(*) AS crossConnections
   `);
-  const crossCount = (crossPathRes.data || crossPathRes.result_set || [])[0]?.crossConnections || 0;
+  const crossCount = (crossPathRes.data || (crossPathRes as any).result_set || [])[0]?.crossConnections || 0;
   console.log(`🔒 [TEST] Cross-user connections between Alice and Bob: ${crossCount}`);
   if (Number(crossCount) !== 0) {
     throw new Error(`CRITICAL FAILURE: Found ${crossCount} connecting paths between Alice and Bob!`);
@@ -159,7 +159,7 @@ async function runTest() {
     WHERE p.name = "Manager Dave"
     RETURN p.id AS personId, p.userId AS userId
   `);
-  const daves = personDaveRes.data || personDaveRes.result_set || [];
+  const daves = (personDaveRes.data || (personDaveRes as any).result_set || []) as any[];
   console.log('👥 [TEST] Separately scoped Person nodes for "Manager Dave":', daves);
   if (daves.length !== 2) {
     throw new Error(`Expected 2 isolated Manager Dave nodes, got ${daves.length}`);
@@ -171,7 +171,7 @@ async function runTest() {
     RETURN type(r) AS rel, labels(child)[0] AS label, child.id AS childId
   `);
   console.log('\n🌳 [TEST] Alice Primary Node Direct Outgoing Edges:');
-  const aliceEdges = aliceTreeRes.data || aliceTreeRes.result_set || [];
+  const aliceEdges = (aliceTreeRes.data || (aliceTreeRes as any).result_set || []) as any[];
   for (const edge of aliceEdges) {
     console.log(`  User(alice_101) -[:${edge.rel}]-> :${edge.label} (${edge.childId})`);
   }
@@ -180,7 +180,7 @@ async function runTest() {
   process.exit(0);
 }
 
-runTest().catch((err) => {
+runTest().catch((err: unknown) => {
   console.error('\n❌ [TEST FAILED]:', err);
   process.exit(1);
 });

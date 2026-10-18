@@ -7,10 +7,11 @@ import {
   Check,
   ChevronLeft,
   Copy,
-  Heart,
+  Loader2,
   Mic,
   MicOff,
   PhoneOff,
+  RefreshCw,
   Send,
   Sparkles,
   Volume2,
@@ -47,8 +48,40 @@ export const HopeVoiceSession = React.forwardRef<
 
   const [inputMessage, setInputMessage] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [connectTimeout, setConnectTimeout] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
+  const [endingCall, setEndingCall] = useState(false);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (session.isConnected) {
+      setConnectTimeout(false);
+      return;
+    }
+    const t = setTimeout(() => {
+      if (!session.isConnected) setConnectTimeout(true);
+    }, 12000);
+    return () => clearTimeout(t);
+  }, [session.isConnected]);
+
+  const handleReconnect = async () => {
+    setReconnecting(true);
+    setConnectTimeout(false);
+    try {
+      if (typeof session.end === 'function') {
+        await session.end().catch(() => {});
+      }
+      if (typeof session.start === 'function') {
+        await session.start();
+      }
+    } catch (e) {
+      console.error('Reconnect error:', e);
+      setConnectTimeout(true);
+    } finally {
+      setReconnecting(false);
+    }
+  };
 
   // Microhpone state
   const isMicEnabled = localParticipant?.isMicrophoneEnabled ?? true;
@@ -61,13 +94,94 @@ export const HopeVoiceSession = React.forwardRef<
     }
   };
 
-  const handleEndCall = () => {
-    if (typeof session.end === 'function') {
-      session.end();
+  const handleEndCall = async () => {
+    if (endingCall) return;
+    setEndingCall(true);
+
+    try {
+      // 1. Resolve current user identity and session mode
+      let currentUserId = '0ccbaecf-43fd-4b7f-91e0-d32233482b07';
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('hope_current_user');
+        if (stored) {
+          try {
+            currentUserId = JSON.parse(stored)?.id || currentUserId;
+          } catch {}
+        }
+        if (!currentUserId) {
+          const cookieMatch = document.cookie.match(/(^| )cbt_patient_id=([^;]+)/);
+          if (cookieMatch) currentUserId = decodeURIComponent(cookieMatch[2]);
+        }
+      }
+
+      const rawTherapist = (therapistTitle || '').toLowerCase();
+      const sessionMode = rawTherapist.includes('daily')
+        ? 'DAILY'
+        : rawTherapist.includes('demand') || rawTherapist.includes('companion')
+        ? 'ON_DEMAND'
+        : 'WEEKLY';
+
+      const currentRoomName = session.room?.name || `therapy_${currentUserId}_${sessionMode.toLowerCase()}_${Date.now()}`;
+
+      // 2. Capture live voice turns from session messages
+      const liveTurns = (messages || [])
+        .filter((m) => m && m.message && m.message.trim().length > 0)
+        .map((m) => ({
+          role: m.from?.isLocal ? 'user' : 'assistant',
+          content: m.message.trim(),
+          createdAt: new Date(m.timestamp).toISOString(),
+        }));
+
+      // 3. Save transcript to backend database so it immediately appears in conversation history
+      if (liveTurns.length > 0) {
+        try {
+          await fetch('/api/sessions/transcript', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              roomName: currentRoomName,
+              userId: currentUserId,
+              startedAt: new Date(messages[0]?.timestamp || Date.now() - 60000).toISOString(),
+              endedAt: new Date().toISOString(),
+              transcript: liveTurns,
+              mode: sessionMode,
+            }),
+          });
+        } catch (saveErr) {
+          console.warn('[End Call Voice Transcript Note]:', saveErr);
+        }
+      }
+
+      // 4. Invalidate local storage cache and notify sidebar listeners to reload
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('hope-conversations-v2');
+        window.dispatchEvent(new Event('hope-session-updated'));
+      }
+
+      // 5. Gracefully stop all local tracks and mute microphone first so PublishTrackError is never raised
+      if (localParticipant) {
+        try {
+          for (const pub of localParticipant.trackPublications.values()) {
+            if (pub.track) {
+              try {
+                pub.track.stop();
+              } catch {}
+            }
+          }
+          await localParticipant.setMicrophoneEnabled(false).catch(() => {});
+        } catch {}
+      }
+
+      // 6. Disconnect the LiveKit session cleanly
+      if (typeof session.end === 'function') {
+        await session.end().catch(() => {});
+      }
+    } catch (err) {
+      console.warn('[End Call Disconnect Notice]:', err);
+    } finally {
+      // 7. Smoothly navigate back to dashboard
+      router.replace('/dashboard');
     }
-    setTimeout(() => {
-      router.push('/dashboard');
-    }, 500);
   };
 
   const handleSendMessage = async (e?: React.FormEvent) => {
@@ -158,10 +272,17 @@ export const HopeVoiceSession = React.forwardRef<
             <span className="text-foreground text-xs font-medium tracking-tight sm:text-sm">
               {companionName}
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-              <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
-              Live Voice
-            </span>
+            {session.isConnected ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                <span className="size-1.5 animate-pulse rounded-full bg-emerald-500" />
+                Live Voice
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+                <Loader2 className="size-2.5 animate-spin text-amber-500" />
+                Connecting…
+              </span>
+            )}
           </div>
         </div>
 
@@ -171,10 +292,20 @@ export const HopeVoiceSession = React.forwardRef<
             size="sm"
             variant="destructive"
             onClick={handleEndCall}
-            className="h-8 gap-1.5 rounded-full px-3 text-xs font-medium shadow-xs"
+            disabled={endingCall}
+            className="h-8 gap-1.5 rounded-full px-3 text-xs font-medium shadow-xs cursor-pointer"
           >
-            <PhoneOff className="size-3.5" />
-            <span className="hidden sm:inline">End session</span>
+            {endingCall ? (
+              <>
+                <Loader2 className="size-3.5 animate-spin" />
+                <span className="hidden sm:inline">Ending…</span>
+              </>
+            ) : (
+              <>
+                <PhoneOff className="size-3.5" />
+                <span className="hidden sm:inline">End session</span>
+              </>
+            )}
           </Button>
         </div>
       </header>
@@ -262,6 +393,13 @@ export const HopeVoiceSession = React.forwardRef<
                     />
                   </div>
                 </div>
+              ) : !session.isConnected ? (
+                <div className="flex flex-col items-center">
+                  <span className="hope-brand text-muted-foreground font-serif text-3xl font-normal italic sm:text-4xl">
+                    h.
+                  </span>
+                  <Loader2 className="size-3 animate-spin text-muted-foreground mt-1" />
+                </div>
               ) : (
                 <span className="hope-brand text-foreground/85 font-serif text-3xl font-normal italic sm:text-4xl">
                   h.
@@ -275,36 +413,55 @@ export const HopeVoiceSession = React.forwardRef<
             <div
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all duration-300',
-                isListening &&
+                !session.isConnected &&
+                  'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 border shadow-xs',
+                session.isConnected && isListening &&
                   'border-primary/30 bg-primary/10 text-primary dark:bg-primary/20 border shadow-xs',
-                isSpeaking &&
+                session.isConnected && isSpeaking &&
                   'border-primary/40 bg-primary/15 text-primary dark:bg-primary/25 border shadow-xs',
-                isThinking && 'border-border/60 bg-muted/60 text-muted-foreground border',
-                !isListening &&
-                  !isSpeaking &&
-                  !isThinking &&
+                session.isConnected && isThinking &&
+                  'border-border/60 bg-muted/60 text-muted-foreground border',
+                session.isConnected && !isListening && !isSpeaking && !isThinking &&
                   'border-border/40 bg-card/60 text-muted-foreground border'
               )}
             >
-              {isListening && (
+              {!session.isConnected ? (
+                connectTimeout ? (
+                  <button
+                    type="button"
+                    onClick={handleReconnect}
+                    disabled={reconnecting}
+                    className="flex items-center gap-1.5 text-amber-700 dark:text-amber-300 hover:underline cursor-pointer"
+                  >
+                    {reconnecting ? (
+                      <Loader2 className="size-3.5 animate-spin text-amber-600 dark:text-amber-400" />
+                    ) : (
+                      <RefreshCw className="size-3.5 text-amber-600 dark:text-amber-400" />
+                    )}
+                    <span>{reconnecting ? 'Retrying…' : 'Tap to reconnect'}</span>
+                  </button>
+                ) : (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin text-amber-600 dark:text-amber-400" />
+                    <span>Connecting to {companionName}…</span>
+                  </>
+                )
+              ) : isListening ? (
                 <>
                   <Mic className="text-primary size-3.5 animate-pulse" />
                   <span>Listening to you…</span>
                 </>
-              )}
-              {isSpeaking && (
+              ) : isSpeaking ? (
                 <>
                   <AudioLines className="text-primary size-3.5 animate-pulse" />
                   <span>Hope is speaking…</span>
                 </>
-              )}
-              {isThinking && (
+              ) : isThinking ? (
                 <>
                   <Sparkles className="text-primary size-3.5 animate-spin" />
                   <span>Reflecting with care…</span>
                 </>
-              )}
-              {!isListening && !isSpeaking && !isThinking && (
+              ) : (
                 <>
                   <Volume2 className="text-muted-foreground size-3" />
                   <span>
@@ -319,46 +476,8 @@ export const HopeVoiceSession = React.forwardRef<
         {/* Middle: Transcript Shown in the Chat Directly */}
         <section className="relative flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-4 sm:px-6">
           <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-end space-y-4">
-            {/* If no transcript messages yet, show welcoming Hope guidance */}
-            {messages.length === 0 ? (
-              <div className="my-auto flex flex-col items-center justify-center py-8 text-center">
-                <div className="bg-care-blue/60 text-foreground flex size-10 items-center justify-center rounded-full">
-                  <Heart className="text-primary size-5" />
-                </div>
-                <span className="text-muted-foreground mt-3 text-[11px] font-semibold tracking-wider uppercase">
-                  A gentle, private space
-                </span>
-                <h2 className="text-foreground font-serif text-2xl font-normal sm:text-3xl">
-                  Start speaking whenever you’re ready.
-                </h2>
-                <p className="text-muted-foreground mt-1.5 max-w-md text-xs leading-relaxed sm:text-sm">
-                  You don’t need to have the right words. Speak naturally about whatever is on your
-                  mind — your live conversation will appear right here.
-                </p>
-
-                {/* Quick thought starters */}
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-                  {[
-                    "I've been feeling a little overwhelmed lately",
-                    'I just need a moment of calm',
-                    'Help me reflect on how my day went',
-                  ].map((starter) => (
-                    <button
-                      key={starter}
-                      type="button"
-                      onClick={() => {
-                        setInputMessage(starter);
-                        inputRef.current?.focus();
-                      }}
-                      className="border-border/80 bg-card/75 text-muted-foreground hover:border-primary/40 hover:bg-accent hover:text-foreground rounded-full border px-3.5 py-1.5 text-xs transition-all"
-                    >
-                      “{starter}”
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              /* The Live Chat Transcript Stream */
+            {/* The Live Chat Transcript Stream */}
+            {messages.length > 0 && (
               <div className="space-y-4 pt-2">
                 <div className="flex items-center justify-center">
                   <span className="border-border/40 bg-muted/40 text-muted-foreground rounded-full border px-3 py-1 text-[11px]">

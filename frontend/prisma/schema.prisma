@@ -36,16 +36,23 @@ model Message {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                 String    @id @default(uuid())
+  name               String?
+  email              String?   @unique
+  emailVerified      DateTime?
+  image              String?
+  password           String?
+  ageRange           String?
+  focusAreas         String[]  @default([])
+  conversationStyle  String?
+  preferredTime      String?
+  preferredMode      String?
+  bio                String?   @db.Text
+  onboardingComplete Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
-  accounts      Account[]
+  accounts           Account[]
 }
 
 model Account {

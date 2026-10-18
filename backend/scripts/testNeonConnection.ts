@@ -1,6 +1,6 @@
 import prisma from '../db/index.js';
 
-async function test() {
+async function test(): Promise<void> {
   try {
     console.log('Testing connection to Neon DB...');
     const result = await prisma.$queryRaw`SELECT current_database(), current_user, version()`;
@@ -17,7 +17,7 @@ async function test() {
     console.log(`   - Messages: ${messageCount}`);
 
     process.exit(0);
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('❌ Connection failed:', err);
     process.exit(1);
   }
